@@ -11,7 +11,8 @@
   <title>Contoso Task Pane Add-in</title>
 
   <!-- Office JavaScript API -->
-  <script type="text/javascript" src="https://appsforoffice.microsoft.com/lib/1/hosted/office.js"></script>
+  <script type="text/javascript"
+    src="https://appsforoffice.microsoft.com/lib/1/hosted/office.js"></script>
 
   <!-- For more information on Fluent UI, visit https://developer.microsoft.com/fluentui#/. -->
   <link rel="stylesheet"
@@ -23,7 +24,8 @@
 
 <body class="ms-font-m ms-welcome ms-Fabric">
   <header class="ms-welcome__header ms-bgColor-neutralLighter">
-    <img width="90" height="90" src="../../assets/logo-filled.png" alt="Contoso" title="Contoso" />
+    <img width="90" height="90" src="../../assets/logo-filled.png" alt="Contoso"
+      title="Contoso" />
     <h1 class="ms-font-su">Welcome</h1>
   </header>
   <main id="app-body" class="ms-welcome__main" style="display: none;">
@@ -31,10 +33,8 @@
     <input type="file" id="fileInput" accept=".csv" />
     <button id="importButton" class="ms-Button">Import Data</button>
 
-    <div role="button" id="run" class="ms-welcome__action ms-Button ms-Button--hero ms-font-xl">
-      <span class="ms-Button-label">Run</span>
-    </div>
-    <div role="button" id="formatTransactions" class="ms-Button ms-Button--hero ms-font-xl">
+    <div role="button" id="formatTransactions"
+      class="ms-Button ms-Button--hero ms-font-xl">
       <span class="ms-Button-label">Format Transactions</span>
     </div>
     <p><label id="item-subject"></label></p>
