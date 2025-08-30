@@ -1,14 +1,18 @@
-/*
- * Copyright (c) Microsoft Corporation. All rights reserved. Licensed under the MIT license.
- * See LICENSE in the project root for license information.
- */
-
 /* global console, document, Excel, Office */
+
+import { MTFile } from "./parser"
 
 Office.onReady((info) => {
   if (info.host === Office.HostType.Excel) {
-    document.getElementById("app-body").style.display = "flex";
-    document.getElementById("formatTransactions").onclick = formatTable;
+    var appBody = document.getElementById("app-body");
+    var formatTransactions = document.getElementById("formatTransactions");
+    var importButton = document.getElementById("importButton");
+    if (!appBody || !formatTransactions || !importButton) {
+      throw Error("Failed to find necessary html components!");
+    }
+    appBody.style.display = "flex";
+    formatTransactions.onclick = formatTable;
+    importButton.onclick = importData;
   }
 });
 
@@ -19,16 +23,6 @@ export async function formatTable() {
       const range = sheet.getUsedRange();
       let dispTable = sheet.tables.add(range, true);
 
-      await context.sync();
-
-      for (let column of ["pi", "pn", "mogroup", "mophysn_na", "mo_qty",
-        "give_units", "dose_text", "route", "start_dati", "stop_dati",
-        "give_amt", "dose_max", "mas_desc", "ymi_grp", "bs_id", "bs_name",
-        "bs_suffix"]) {
-        console.log(column);
-        dispTable.columns.getItem(column).delete();
-      }
-
       if (Office.context.requirements.isSetSupported("ExcelApi", "1.2")) {
         dispTable.getRange().format.autofitRows();
         dispTable.getRange().format.autofitColumns();
@@ -37,5 +31,26 @@ export async function formatTable() {
     });
   } catch (error) {
     console.error(error);
+  }
+}
+
+export async function importData() {
+  const fileInput = document.getElementById("fileInput") as HTMLInputElement;
+
+  if (fileInput.files?.length === 0) {
+    console.error("No file selected.");
+    return;
+  }
+
+  const file = (fileInput.files as FileList)[0];
+
+  const mtFile = new MTFile(file);
+  try {
+    for await (const line of mtFile) {
+      console.log(line);
+    }
+    console.log("File Processing complete.");
+  } catch (error) {
+    console.error("An error occured while reading the file: ", error);
   }
 }
