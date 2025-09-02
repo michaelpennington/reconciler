@@ -3,31 +3,31 @@
  * See LICENSE in the project root for license information.
  */
 
- html,
- body {
-     width: 100%;
-     height: 100%;
-     margin: 0;
-     padding: 0;
- }
- 
- ul {
-     margin: 0;
-     padding: 0;
- }
- 
- .ms-welcome__header {
+html,
+body {
+    width: 100%;
+    height: 100%;
+    margin: 0;
+    padding: 0;
+}
+
+ul {
+    margin: 0;
+    padding: 0;
+}
+
+.ms-welcome__header {
     padding: 20px;
     padding-bottom: 30px;
-    padding-top: 100px;
+    padding-top: 10px;
     display: -webkit-flex;
     display: flex;
     -webkit-flex-direction: column;
     flex-direction: column;
     align-items: center;
- }
+}
 
- .ms-welcome__main {
+.ms-welcome__main {
     display: -webkit-flex;
     display: flex;
     -webkit-flex-direction: column;
@@ -39,40 +39,133 @@
     -webkit-flex: 1 0 0;
     flex: 1 0 0;
     padding: 10px 20px;
- }
- 
- .ms-welcome__main > h2 {
-     width: 100%;
-     text-align: center;
- }
- 
- .ms-welcome__features {
-     list-style-type: none;
-     margin-top: 20px;
- }
- 
- .ms-welcome__features.ms-List .ms-ListItem {
-     padding-bottom: 20px;
-     display: -webkit-flex;
-     display: flex;
- }
- 
- .ms-welcome__features.ms-List .ms-ListItem > .ms-Icon {
-     margin-right: 10px;
- }
- 
- .ms-welcome__action.ms-Button--hero {
-     margin-top: 30px;
- }
- 
+}
+
+.ms-welcome__main>h2 {
+    width: 100%;
+    text-align: center;
+}
+
+.ms-welcome__features {
+    list-style-type: none;
+    margin-top: 20px;
+}
+
+.ms-welcome__features.ms-List .ms-ListItem {
+    padding-bottom: 20px;
+    display: -webkit-flex;
+    display: flex;
+}
+
+.ms-welcome__features.ms-List .ms-ListItem>.ms-Icon {
+    margin-right: 10px;
+}
+
+.ms-welcome__action.ms-Button--hero {
+    margin-top: 30px;
+}
+
 .ms-Button.ms-Button--hero .ms-Button-label {
-  color: #0078d7;
+    color: #0078d7;
+    font-size: 22px;
+}
+
+.ms-Button {
+    /* This is the missing piece! It turns the button into a flex container. */
+    /* display: inline-flex; */
+    display: -webkit-flex;
+    display: flex;
+    -webkit-flex-direction: column;
+    flex-direction: column;
+    -webkit-flex-wrap: nowrap;
+    flex-wrap: nowrap;
+    -webkit-align-items: center;
+    align-items: center;
+
+    /* These are other standard properties for alignment and appearance */
+    /* align-items: center; */
+    justify-content: center;
+    border: 1px solid transparent;
+    padding: 0 16px;
+    min-width: 80px;
+    height: 32px;
+    /* background-color: #f3f2f1; */
+    color: #323130;
+    background-color: #f3f2f1;
+    cursor: pointer;
+    font-family: 'Segoe UI Web (West European)', 'Segoe UI', -apple-system, BlinkMacSystemFont, Roboto, 'Helvetica Neue', sans-serif;
+    font-size: 14px;
+    font-weight: 600;
 }
 
 .ms-Button.ms-Button--hero:hover .ms-Button-label,
-.ms-Button.ms-Button--hero:focus .ms-Button-label{
-  color: #005a9e;
-  cursor: pointer;
+.ms-Button.ms-Button--hero:focus .ms-Button-label {
+    color: #005a9e;
+    cursor: pointer;
+}
+
+.fluent-file-input {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    /* Adds space between the button and the file name */
+}
+
+/* Hide the default file input element completely */
+.fluent-file-input input[type="file"] {
+    width: 0.1px;
+    height: 0.1px;
+    opacity: 0;
+    overflow: hidden;
+    position: absolute;
+    z-index: -1;
+}
+
+/* Style the label to look like a button. Fluent UI's .ms-Button does most of the work. */
+.fluent-file-input label.ms-Button {
+    cursor: pointer;
+    /* Change cursor to a pointer on hover */
+}
+
+.command-bar-style {
+    display: flex;
+    gap: 8px;
+    align-items: flex-start;
+}
+
+
+.ms-Button.ms-Button--compound {
+    /* Remove the default border */
+    border: none;
+    /* Make the background transparent until the user hovers */
+    background-color: transparent;
+    /* Set a fixed height for a consistent look */
+    height: 60px;
+}
+
+.ms-Button--compound .ms-Button-icon .ms-Icon {
+    font-size: 28px;
+    /* Adjust this value to make the icon bigger or smaller */
+    line-height: 1;
+}
+
+.ms-Button--compound .ms-Button-label {
+    font-size: 12px;
+    font-weight: 600;
+    /* Make the text slightly bolder */
+}
+
+/* Add a background color on hover to show the button's clickable area */
+.ms-Button.ms-Button--compound:hover {
+    background-color: #f3f2f1;
+    /* A light grey for the hover effect */
+}
+
+/* Style for the text that displays the selected file name */
+.file-name-display {
+    font-family: 'Segoe UI Web (West European)', 'Segoe UI', -apple-system, BlinkMacSystemFont, Roboto, 'Helvetica Neue', sans-serif;
+    font-size: 14px;
+    color: #323130;
 }
 
 b {

@@ -29,9 +29,26 @@
     <h1 class="ms-font-su">Welcome</h1>
   </header>
   <main id="app-body" class="ms-welcome__main" style="display: none;">
-    <p>Select a .TXT file to import:</p>
-    <input type="file" id="fileInput" accept=".txt" />
-    <button id="importButton" class="ms-Button">Import Data</button>
+    <div class="fluent-file-input">
+      <div class="command-bar-style">
+        <input type="file" id="fileInput" accept=".txt" />
+
+        <label for="fileInput" class="ms-Button ms-Button--compound">
+          <span class="ms-Button-icon"><i
+              class="ms-Icon ms-Icon--OpenFile"></i></span>
+          <span class="ms-Button-label">Select file</span>
+        </label>
+
+        <button id="importButton"
+          class="ms-Button ms-Button--primary ms-Button--compound" disabled>
+          <span class="ms-Button-icon"><i
+              class="ms-Icon ms-Icon--Upload"></i></span>
+          <span class="ms-Button-label">Import</span>
+        </button>
+      </div>
+      <span id="fileName" class="file-name-display">No file chosen</span>
+
+    </div>
 
     <div role="button" id="formatTransactions"
       class="ms-Button ms-Button--hero ms-font-xl">
