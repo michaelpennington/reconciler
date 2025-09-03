@@ -31,6 +31,10 @@ Office.onReady((info) => {
   }
 });
 
+export async function analyzeData() {
+
+}
+
 export async function formatTable() {
   try {
     await Excel.run(async (context) => {
@@ -55,12 +59,14 @@ export async function formatTable() {
         dispTable.getRange().format.autofitRows();
         dispTable.getRange().format.autofitColumns();
       }
-      const dateColumn2 = dispTable.columns.getItem("TransactionDate");
-      const rxNumColumn = dispTable.columns.getItem("RxNumber");
+      const dateColumn2 = dispTable.columns.getItem("RxNumber");
+      const rxNumColumn = dispTable.columns.getItem("PtID");
+      const timeColumn = dispTable.columns.getItem("TransactionDate");
       rxNumColumn.load("index");
       dateColumn2.load("index");
+      timeColumn.load("index");
       await context.sync();
-      dispTable.getDataBodyRange().sort.apply([{ key: rxNumColumn.index, ascending: true }, { key: dateColumn2.index, ascending: true }]);
+      dispTable.getDataBodyRange().sort.apply([{ key: rxNumColumn.index, ascending: true }, { key: dateColumn2.index, ascending: true }, { key: timeColumn.index, ascending: true }]);
       await context.sync();
     });
   } catch (error) {

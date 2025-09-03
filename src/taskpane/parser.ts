@@ -131,6 +131,7 @@ async function* mtLineParser(lineReader: AsyncGenerator<string>): AsyncGenerator
   let currentPtName: string | null = null;
   let currentPtId: string | null = null;
   let currentRx: string | null = null;
+  let lineNo = 0;
   let currentMedication: string = "";
   let justSawPt = false;
   let readingMedication = false;
@@ -147,24 +148,37 @@ async function* mtLineParser(lineReader: AsyncGenerator<string>): AsyncGenerator
     } else if (justSawPt) {
       currentPtId = getField(line, Field.PtId);
       justSawPt = false;
-    } else if (line.startsWith("Z")) {
-      if (!currentPtName || !currentPtId) {
-        throw new Error(`Rx ${getField(line, Field.RxNum)} found outside context of patient!`);
+    } else if (line.startsWith("Z") || line.startsWith("U")) {
+      const number = /[0-9]/;
+      if (number.test(line.charAt(1))) {
+        if (!currentPtName || !currentPtId) {
+          throw new Error(`Rx ${getField(line, Field.RxNum)} found outside context of patient!`);
+        }
+        currentRx = getField(line, Field.RxNum);
+        currentMedication = getField(line, Field.Medication).trim();
+        readingMedication = true;
+        readingAdmins = true;
       }
-      currentRx = getField(line, Field.RxNum);
-      currentMedication = getField(line, Field.Medication).trim();
-      readingMedication = true;
-      readingAdmins = true;
     } else if (line.startsWith("       Dose")) {
       readingAdmins = false;
-      let doseStrs = getField(line, Field.Dose).trim().split(" ");
-      let doseAmt = parseFloat(doseStrs[0].replace(",", ""));
-      let units = doseStrs[1];
-      if (!currentRx || !currentPtName || !currentPtId || !doseAmt || !units) {
-        throw new Error("Found Dose line before finding an Rx or Pt!");
+      let doseStr = getField(line, Field.Dose).trim();
+      let doseAmt;
+      let units;
+      if (doseStr.startsWith("See Taper")) {
+        doseAmt = currentDoseAmt;
+        units = currentDoseUnits;
+      } else {
+        let doseStrs = doseStr.split(" ");
+        doseAmt = parseFloat(doseStrs[0].replace(",", ""));
+        units = doseStrs[1] ?? "NF";
       }
-      if (doseAmt !== currentDoseAmt || units != currentDoseUnits) {
-        throw new Error("Dose amount is not equal!")
+      if (!currentRx || !currentPtName || !currentPtId || (!doseAmt && doseAmt != 0) || !units) {
+        console.log(currentRx, currentPtName, currentPtId, doseAmt, units);
+        throw new Error(`Found Dose line before finding an Rx or Pt! on line ${lineNo}`);
+      }
+      if ((doseAmt !== currentDoseAmt || units !== currentDoseUnits) && (doseAmt !== 0 && units !== "NF")) {
+        console.log(currentRx, currentPtName, currentPtId, doseAmt, units);
+        throw new Error(`Dose amount is not equal! on line ${lineNo}`)
       }
       let dosePerUnits = undefined;
       if (currentMedStrength && currentMedStrengthUnits && currentMedStrengthUnits === currentDoseUnits) {
@@ -204,7 +218,8 @@ async function* mtLineParser(lineReader: AsyncGenerator<string>): AsyncGenerator
         readingMedication = false;
         let lastParen = currentMedication.lastIndexOf("(");
         if (lastParen === -1) {
-          throw Error("Found medication string without ending dose!");
+          console.log(currentMedication);
+          throw Error(`Found medication string without ending dose! On line ${lineNo}`);
         }
         let dose = currentMedication.slice(lastParen);
         currentMedication = currentMedication.slice(0, lastParen - 1);
@@ -231,6 +246,7 @@ async function* mtLineParser(lineReader: AsyncGenerator<string>): AsyncGenerator
         adminStack.push(admin);
       }
     }
+    lineNo++;
   }
 }
 
