@@ -10,12 +10,14 @@ Office.onReady((info) => {
     const importButton = document.getElementById("importButton") as HTMLButtonElement;
     const fileNameDisplay = document.getElementById("fileName") as HTMLElement;
     const fileInput = document.getElementById("fileInput") as HTMLInputElement;
+    const analyzeDataButton = document.getElementById("analyzeData") as HTMLButtonElement;
     if (!appBody || !formatTransactions) {
       throw Error("Failed to find necessary html components!");
     }
     appBody.style.display = "flex";
     formatTransactions.onclick = formatTable;
     importButton.onclick = importData;
+    analyzeDataButton.onclick = analyzeData;
 
     fileInput.addEventListener("change", () => {
       if (fileInput.files && fileInput.files.length > 0) {
@@ -31,7 +33,111 @@ Office.onReady((info) => {
   }
 });
 
-export async function analyzeData() {}
+export async function analyzeData() {
+  try {
+    await Excel.run(async (context) => {
+      const sheets = context.workbook.worksheets;
+      const sheet = sheets.add("AdminVDisp");
+      sheet.name = "AdminVDisp";
+      let avdTable = sheet.tables.add("A1:H1", true);
+      avdTable.name = "AdminsVDispenses";
+
+      avdTable.load("headerRowRange");
+      await context.sync();
+
+      avdTable.getHeaderRowRange().values = [
+        [
+          "PtID",
+          "RxNumber",
+          "Medication",
+          "Time",
+          "NumberDispensed",
+          "NumberGiven",
+          "NumberReturned",
+          "NumberWasted",
+        ],
+      ];
+      const adminsTable = context.workbook.worksheets.getItem("Admins").tables.getItem("Admins").getDataBodyRange().load("values");
+      const disposTable = context.workbook.worksheets.getItem("Dispenses").tables.getItem("Dispenses").getDataBodyRange().load("values");
+      await context.sync();
+      const adminsData = adminsTable.values;
+      const disposData = disposTable.values;
+      let currentRxNumber = adminsData[0][AdminsColumns.RxNumber];
+      let currentPtID = adminsData[0][AdminsColumns.PtID];
+      for (let i = 0, j = 0; i < adminsData.length && j < disposData.length;) {
+        console.log(`i = ${i}, j = ${j}`);
+        let currentAdmin = adminsData[i];
+        let currentDispense = disposData[j];
+        let adminNext = false;
+        if (currentAdmin[AdminsColumns.PtID] !== currentPtID) {
+          if (currentDispense[DisposColumns.PtID] !== currentPtID) {
+            if (currentAdmin[AdminsColumns.AdminTime] < currentDispense[DisposColumns.TransactionDate]) {
+              adminNext = true;
+            }
+          }
+        } else if (currentDispense[DisposColumns.PtID] !== currentPtID) {
+          adminNext = true;
+        } else if (currentAdmin[AdminsColumns.RxNumber] !== currentRxNumber) {
+          if (currentDispense[DisposColumns.RxNumber] !== currentRxNumber) {
+            if (currentAdmin[AdminsColumns.AdminTime] < currentDispense[DisposColumns.TransactionDate]) {
+              adminNext = true;
+            }
+          }
+        } else if (currentDispense[DisposColumns.RxNumber] !== currentRxNumber) {
+          adminNext = true;
+        }
+        if (adminNext) {
+          currentRxNumber = currentAdmin[AdminsColumns.RxNumber];
+          currentPtID = currentAdmin[AdminsColumns.PtID];
+          if (currentAdmin[AdminsColumns.Given]) {
+            avdTable.rows.add(undefined, [[
+              currentAdmin[AdminsColumns.PtID],
+              currentAdmin[AdminsColumns.RxNumber],
+              currentAdmin[AdminsColumns.Medication],
+              currentAdmin[AdminsColumns.AdminTime],
+              0,
+              currentAdmin[AdminsColumns.NumberGiven] ?? 0,
+              0,
+              0,
+            ]], true);
+          }
+          i++;
+        } else {
+          currentRxNumber = currentDispense[DisposColumns.RxNumber];
+          currentPtID = currentDispense[DisposColumns.PtID];
+          let transType = currentDispense[DisposColumns.TransactionType];
+          const qty = currentDispense[DisposColumns.Quantity];
+          let wasteQty = 0;
+          let issueQty = 0;
+          let returnQty = 0;
+          if (transType === "I") {
+            issueQty = qty;
+          } else if (transType === "R") {
+            returnQty = -qty
+          } else if (transType === "W") {
+            wasteQty = qty;
+          }
+          avdTable.rows.add(undefined, [[
+            currentDispense[DisposColumns.PtID],
+            currentDispense[DisposColumns.RxNumber],
+            currentDispense[DisposColumns.RxName],
+            currentDispense[DisposColumns.TransactionDate],
+            issueQty,
+            0,
+            returnQty,
+            wasteQty,
+          ]], true);
+          j++;
+        }
+        await context.sync();
+      }
+      await context.sync();
+    });
+  } catch (error) {
+    console.error(error);
+  }
+
+}
 
 export async function formatTable() {
   try {
@@ -96,8 +202,8 @@ export async function formatTable() {
         dispTable.getRange().format.autofitRows();
         dispTable.getRange().format.autofitColumns();
       }
-      const rxNumColumn = dispTable.columns.getItem("RxNumber");
       const ptIDColumn = dispTable.columns.getItem("PtID");
+      const rxNumColumn = dispTable.columns.getItem("RxNumber");
       const timeColumn = dispTable.columns.getItem("TransactionDate");
       ptIDColumn.load("index");
       rxNumColumn.load("index");
@@ -204,6 +310,18 @@ export async function importData() {
       adminsTable.columns.getItem("SchedTime").getDataBodyRange().numberFormat = [
         ["[$-409]m/d/yy h:mm AM/PM;@"],
       ];
+      const ptIDColumn = adminsTable.columns.getItem("PtID");
+      const rxNumColumn = adminsTable.columns.getItem("RxNumber");
+      const timeColumn = adminsTable.columns.getItem("AdminTime");
+      ptIDColumn.load("index");
+      rxNumColumn.load("index");
+      timeColumn.load("index");
+      await context.sync();
+      adminsTable.getDataBodyRange().sort.apply([
+        { key: ptIDColumn.index, ascending: true },
+        { key: rxNumColumn.index, ascending: true },
+        { key: timeColumn.index, ascending: true },
+      ]);
 
       sheet.activate();
       await context.sync();
@@ -212,3 +330,62 @@ export async function importData() {
     console.error("An error occured while reading the file: ", error);
   }
 }
+
+const enum AdminsColumns {
+  RxNumber,
+  PtName,
+  PtID,
+  Medication,
+  AdminTime,
+  FiledTime,
+  SchedTime,
+  User,
+  Given,
+  RxScanned,
+  PtScanned,
+  DoseAmount,
+  Units,
+  AdminDoseAmt,
+  AdminUnits,
+  MedStrength,
+  MedStrengthUnits,
+  NumberPerDose,
+  NumberGiven,
+};
+
+const enum DisposColumns {
+  PtID,
+  Omnicell,
+  Mnemonic,
+  TransactionDate,
+  ChargeID,
+  ChargeType,
+  TransactionType,
+  TransactionSubtype,
+  Quantity,
+  Countback,
+  MOOverride,
+  IssuedAfterDischarge,
+  QuantityOnHand,
+  UnitOfIssue,
+  UserName,
+  WitnessName,
+  WasteQuantity,
+  OmnicellName,
+  ItemName,
+  RxSuffix,
+  RxName,
+  PtName,
+  NullType,
+  ReconcileDose,
+  QtyZ,
+  WasteQtyZ,
+  MedStrengthUnits,
+  CaseId,
+  RxNumber,
+  MasDesc,
+  MRNumber,
+  User,
+  UserType,
+  WitnessID,
+};

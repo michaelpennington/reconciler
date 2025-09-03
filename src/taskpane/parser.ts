@@ -364,12 +364,12 @@ function readStrength(medication: string): { amount: number; units: string } | u
       for (const unit of UNITS) {
         if (word === unit) {
           units = unit;
-          amount = parseFloat(lastWord);
+          amount = parseFloat(lastWord.replace(",", ""));
           break;
         } else if (word.endsWith(unit)) {
           units = unit;
           let unitStart = word.lastIndexOf(unit);
-          amount = parseFloat(word.slice(0, unitStart).trim());
+          amount = parseFloat(word.slice(0, unitStart).trim().replace(",", ""));
           break;
         }
       }
