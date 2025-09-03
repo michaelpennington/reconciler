@@ -104,7 +104,27 @@ export class EMARLineItem {
   countPerDose: number | undefined;
   countGiven: number | undefined;
 
-  constructor(rxNum: string, ptName: string, ptId: string, medication: string, adminTime: Date, filedTime: Date, schedTime: Date | undefined, user: string, given: boolean, rxScanned: boolean, ptScanned: boolean, doseAmt: number, units: string, adminDoseAmt: number, adminUnits: string, medStrength: number | undefined, medStrengthUnits: string | undefined, countPerDose: number | undefined, countGiven: number | undefined) {
+  constructor(
+    rxNum: string,
+    ptName: string,
+    ptId: string,
+    medication: string,
+    adminTime: Date,
+    filedTime: Date,
+    schedTime: Date | undefined,
+    user: string,
+    given: boolean,
+    rxScanned: boolean,
+    ptScanned: boolean,
+    doseAmt: number,
+    units: string,
+    adminDoseAmt: number,
+    adminUnits: string,
+    medStrength: number | undefined,
+    medStrengthUnits: string | undefined,
+    countPerDose: number | undefined,
+    countGiven: number | undefined
+  ) {
     this.rxNum = rxNum;
     this.ptName = ptName;
     this.ptId = ptId;
@@ -176,18 +196,31 @@ async function* mtLineParser(lineReader: AsyncGenerator<string>): AsyncGenerator
         console.log(currentRx, currentPtName, currentPtId, doseAmt, units);
         throw new Error(`Found Dose line before finding an Rx or Pt! on line ${lineNo}`);
       }
-      if ((doseAmt !== currentDoseAmt || units !== currentDoseUnits) && (doseAmt !== 0 && units !== "NF")) {
+      if (
+        (doseAmt !== currentDoseAmt || units !== currentDoseUnits) &&
+        doseAmt !== 0 &&
+        units !== "NF"
+      ) {
         console.log(currentRx, currentPtName, currentPtId, doseAmt, units);
-        throw new Error(`Dose amount is not equal! on line ${lineNo}`)
+        throw new Error(`Dose amount is not equal! on line ${lineNo}`);
       }
       let dosePerUnits = undefined;
-      if (currentMedStrength && currentMedStrengthUnits && currentMedStrengthUnits === currentDoseUnits) {
+      if (
+        currentMedStrength &&
+        currentMedStrengthUnits &&
+        currentMedStrengthUnits === currentDoseUnits
+      ) {
         dosePerUnits = currentDoseAmt / currentMedStrength;
       }
       while (adminStack.length > 0) {
         let admin = adminStack.shift() as AdminDetails;
         let countGiven = undefined;
-        if (currentMedStrength && currentMedStrengthUnits && currentMedStrengthUnits === admin.adminUnits && admin.given) {
+        if (
+          currentMedStrength &&
+          currentMedStrengthUnits &&
+          currentMedStrengthUnits === admin.adminUnits &&
+          admin.given
+        ) {
           countGiven = admin.adminDoseAmt / currentMedStrength;
         }
         yield new EMARLineItem(
@@ -209,7 +242,7 @@ async function* mtLineParser(lineReader: AsyncGenerator<string>): AsyncGenerator
           currentMedStrength,
           currentMedStrengthUnits,
           dosePerUnits,
-          countGiven,
+          countGiven
         );
       }
     } else if (readingMedication) {
@@ -224,7 +257,7 @@ async function* mtLineParser(lineReader: AsyncGenerator<string>): AsyncGenerator
         let dose = currentMedication.slice(lastParen);
         currentMedication = currentMedication.slice(0, lastParen - 1);
         if (!dose.startsWith("(") || !dose.endsWith(")")) {
-          throw Error(`Malformed dose ${dose} at and of medication]`)
+          throw Error(`Malformed dose ${dose} at and of medication]`);
         }
         let doseStrs = dose.slice(1, -1).trim().split(" ");
         currentDoseAmt = parseFloat(doseStrs[0].replace(",", ""));
@@ -270,7 +303,7 @@ class AdminDetails {
     rxScanned: boolean,
     ptScanned: boolean,
     adminDoseAmt: number,
-    adminUnits: string,
+    adminUnits: string
   ) {
     this.adminTime = adminTime;
     this.filedTime = filedTime;
@@ -295,9 +328,27 @@ function isValidDate(value: any): boolean {
   return value instanceof Date && !isNaN(value.getTime());
 }
 
-const UNITS: Array<string> = ["MG", "mg", "MCG", "mcg", "G", "g", "GR", "gr", "PUFF", "EACH", "each", "puff", "mL", "ML", "ml", "GM", "gm"];
+const UNITS: Array<string> = [
+  "MG",
+  "mg",
+  "MCG",
+  "mcg",
+  "G",
+  "g",
+  "GR",
+  "gr",
+  "PUFF",
+  "EACH",
+  "each",
+  "puff",
+  "mL",
+  "ML",
+  "ml",
+  "GM",
+  "gm",
+];
 
-function readStrength(medication: string): { amount: number, units: string } | undefined {
+function readStrength(medication: string): { amount: number; units: string } | undefined {
   let seenOpenParen = false;
   let lastWord = "";
   let units: string | undefined = undefined;
@@ -329,7 +380,6 @@ function readStrength(medication: string): { amount: number, units: string } | u
     }
   }
   if (!units || !amount) {
-
     return undefined;
   } else {
     return { units, amount };
@@ -363,6 +413,6 @@ function readAdminDetails(line: string): AdminDetails | null {
     rxScanned,
     ptScanned,
     adminDoseAmt,
-    adminUnits,
+    adminUnits
   );
 }

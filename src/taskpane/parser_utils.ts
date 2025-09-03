@@ -96,13 +96,13 @@ export function fromOCDate(date: string): Date {
 }
 
 function isLeapYear(year: number): boolean {
-  return (year % 400 === 0 || (year % 100 !== 0 && year % 4 === 0));
+  return year % 400 === 0 || (year % 100 !== 0 && year % 4 === 0);
 }
 
 function dayOfYear(date: Date): number {
   let days = 0;
   for (const m of Array.from({ length: date.getMonth() }, (_, index) => index)) {
-    days += DAYS_IN_MONTH[m]
+    days += DAYS_IN_MONTH[m];
     if (m === 1 && isLeapYear(date.getFullYear())) {
       days += 1;
     }

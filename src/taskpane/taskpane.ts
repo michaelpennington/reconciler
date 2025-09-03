@@ -1,6 +1,6 @@
 /* global console, document, Excel, Office */
 
-import { MTFile } from "./parser"
+import { MTFile } from "./parser";
 import { fromOCDate, toOADate } from "./parser_utils";
 
 Office.onReady((info) => {
@@ -25,15 +25,13 @@ Office.onReady((info) => {
         fileNameDisplay.textContent = "No file chosen";
         importButton.disabled = true;
       }
-    })
+    });
 
     importButton.onclick = importData;
   }
 });
 
-export async function analyzeData() {
-
-}
+export async function analyzeData() {}
 
 export async function formatTable() {
   try {
@@ -49,24 +47,67 @@ export async function formatTable() {
       dateColumn.load("values");
       await context.sync();
       console.log(dateColumn);
-      let dates = Array.from(dateColumn.values.map((date) => [toOADate(fromOCDate(date[0] as string))]));
+      let dates = Array.from(
+        dateColumn.values.map((date) => [toOADate(fromOCDate(date[0] as string))])
+      );
       console.log(dates);
       dateColumn.values = dates;
       dateColumn.numberFormat = [["[$-409]m/d/yy h:mm AM/PM;@"]];
-      dispTable.getHeaderRowRange().values = [["PtID", "Omnicell", "Mnemonic", "TransactionDate", "ChargeID", "ChargeType", "TransactionType", "TransactionSubtype", "Quantity", "Countback", "MOOverride", "IssuedAfterDischarge", "QuantityOnHand", "UnitOfIssue", "UserName", "WitnessName", "WasteQuantity", "OmnicellName", "ItemName", "RxSuffix", "RxName", "PtName", "NullType", "ReconcileDose", "QtyZ", "WasteQtyZ", "MedStrengthUnits", "CaseId", "RxNumber", "MasDesc", "MRNumber", "User", "UserType", "WitnessID"]];
+      dispTable.getHeaderRowRange().values = [
+        [
+          "PtID",
+          "Omnicell",
+          "Mnemonic",
+          "TransactionDate",
+          "ChargeID",
+          "ChargeType",
+          "TransactionType",
+          "TransactionSubtype",
+          "Quantity",
+          "Countback",
+          "MOOverride",
+          "IssuedAfterDischarge",
+          "QuantityOnHand",
+          "UnitOfIssue",
+          "UserName",
+          "WitnessName",
+          "WasteQuantity",
+          "OmnicellName",
+          "ItemName",
+          "RxSuffix",
+          "RxName",
+          "PtName",
+          "NullType",
+          "ReconcileDose",
+          "QtyZ",
+          "WasteQtyZ",
+          "MedStrengthUnits",
+          "CaseId",
+          "RxNumber",
+          "MasDesc",
+          "MRNumber",
+          "User",
+          "UserType",
+          "WitnessID",
+        ],
+      ];
       dispSheet.activate();
       if (Office.context.requirements.isSetSupported("ExcelApi", "1.2")) {
         dispTable.getRange().format.autofitRows();
         dispTable.getRange().format.autofitColumns();
       }
-      const dateColumn2 = dispTable.columns.getItem("RxNumber");
-      const rxNumColumn = dispTable.columns.getItem("PtID");
+      const rxNumColumn = dispTable.columns.getItem("RxNumber");
+      const ptIDColumn = dispTable.columns.getItem("PtID");
       const timeColumn = dispTable.columns.getItem("TransactionDate");
+      ptIDColumn.load("index");
       rxNumColumn.load("index");
-      dateColumn2.load("index");
       timeColumn.load("index");
       await context.sync();
-      dispTable.getDataBodyRange().sort.apply([{ key: rxNumColumn.index, ascending: true }, { key: dateColumn2.index, ascending: true }, { key: timeColumn.index, ascending: true }]);
+      dispTable.getDataBodyRange().sort.apply([
+        { key: ptIDColumn.index, ascending: true },
+        { key: rxNumColumn.index, ascending: true },
+        { key: timeColumn.index, ascending: true },
+      ]);
       await context.sync();
     });
   } catch (error) {
@@ -85,7 +126,6 @@ export async function importData() {
 
     const file = (fileInput.files as FileList)[0];
 
-
     const mtFile = new MTFile(file);
     await Excel.run(async (context) => {
       const sheets = context.workbook.worksheets;
@@ -97,39 +137,73 @@ export async function importData() {
       adminsTable.load("headerRowRange");
       await context.sync();
 
-      adminsTable.getHeaderRowRange().values = [["RxNumber", "PtName", "PtID", "Medication", "AdminTime", "FiledTime", "SchedTime", "User", "Given", "RxScanned", "PtScanned", "DoseAmount", "Units", "AdminDoseAmt", "AdminUnits", "MedStrength", "MedStrengthUnits", "NumberPerDose", "NumberGiven"]];
+      adminsTable.getHeaderRowRange().values = [
+        [
+          "RxNumber",
+          "PtName",
+          "PtID",
+          "Medication",
+          "AdminTime",
+          "FiledTime",
+          "SchedTime",
+          "User",
+          "Given",
+          "RxScanned",
+          "PtScanned",
+          "DoseAmount",
+          "Units",
+          "AdminDoseAmt",
+          "AdminUnits",
+          "MedStrength",
+          "MedStrengthUnits",
+          "NumberPerDose",
+          "NumberGiven",
+        ],
+      ];
       for await (const line of mtFile) {
         console.log(line);
-        adminsTable.rows.add(undefined, [[
-          line.rxNum,
-          line.ptName,
-          line.ptId,
-          line.medication,
-          toOADate(line.adminTime) ?? "UNKNOWN",
-          toOADate(line.filedTime) ?? "UNKNOWN",
-          toOADate(line.schedTime) ?? "PRN",
-          line.user,
-          line.given,
-          line.rxScanned,
-          line.ptScanned,
-          line.doseAmt,
-          line.units,
-          line.adminDoseAmt,
-          line.adminUnits,
-          line.medStrength ?? "UNKNOWN",
-          line.medStrengthUnits ?? "UNKNOWN",
-          line.countPerDose ?? "UNKNOWN",
-          line.countGiven ?? "UNKNOWN",
-        ]], true);
+        adminsTable.rows.add(
+          undefined,
+          [
+            [
+              line.rxNum,
+              line.ptName,
+              line.ptId,
+              line.medication,
+              toOADate(line.adminTime) ?? "UNKNOWN",
+              toOADate(line.filedTime) ?? "UNKNOWN",
+              toOADate(line.schedTime) ?? "PRN",
+              line.user,
+              line.given,
+              line.rxScanned,
+              line.ptScanned,
+              line.doseAmt,
+              line.units,
+              line.adminDoseAmt,
+              line.adminUnits,
+              line.medStrength ?? "UNKNOWN",
+              line.medStrengthUnits ?? "UNKNOWN",
+              line.countPerDose ?? "UNKNOWN",
+              line.countGiven ?? "UNKNOWN",
+            ],
+          ],
+          true
+        );
       }
       console.log("File Processing complete.");
       if (Office.context.requirements.isSetSupported("ExcelApi", "1.2")) {
         adminsTable.getRange().format.autofitRows();
         adminsTable.getRange().format.autofitColumns();
       }
-      adminsTable.columns.getItem("AdminTime").getDataBodyRange().numberFormat = [["[$-409]m/d/yy h:mm AM/PM;@"]];
-      adminsTable.columns.getItem("FiledTime").getDataBodyRange().numberFormat = [["[$-409]m/d/yy h:mm AM/PM;@"]];
-      adminsTable.columns.getItem("SchedTime").getDataBodyRange().numberFormat = [["[$-409]m/d/yy h:mm AM/PM;@"]];
+      adminsTable.columns.getItem("AdminTime").getDataBodyRange().numberFormat = [
+        ["[$-409]m/d/yy h:mm AM/PM;@"],
+      ];
+      adminsTable.columns.getItem("FiledTime").getDataBodyRange().numberFormat = [
+        ["[$-409]m/d/yy h:mm AM/PM;@"],
+      ];
+      adminsTable.columns.getItem("SchedTime").getDataBodyRange().numberFormat = [
+        ["[$-409]m/d/yy h:mm AM/PM;@"],
+      ];
 
       sheet.activate();
       await context.sync();
