@@ -57,86 +57,88 @@ export async function analyzeData() {
           "NumberWasted",
         ],
       ];
-      const adminsTable = context.workbook.worksheets.getItem("Admins").tables.getItem("Admins").getDataBodyRange().load("values");
-      const disposTable = context.workbook.worksheets.getItem("Dispenses").tables.getItem("Dispenses").getDataBodyRange().load("values");
+      const adminsTable = context.workbook.worksheets
+        .getItem("Admins")
+        .tables.getItem("Admins")
+        .getDataBodyRange()
+        .load("values");
+      const disposTable = context.workbook.worksheets
+        .getItem("Dispenses")
+        .tables.getItem("Dispenses")
+        .getDataBodyRange()
+        .load("values");
       await context.sync();
       const adminsData = adminsTable.values;
       const disposData = disposTable.values;
-      let currentRxNumber = adminsData[0][AdminsColumns.RxNumber];
-      let currentPtID = adminsData[0][AdminsColumns.PtID];
-      for (let i = 0, j = 0; i < adminsData.length && j < disposData.length;) {
-        console.log(`i = ${i}, j = ${j}`);
-        let currentAdmin = adminsData[i];
-        let currentDispense = disposData[j];
-        let adminNext = false;
-        if (currentAdmin[AdminsColumns.PtID] !== currentPtID) {
-          if (currentDispense[DisposColumns.PtID] !== currentPtID) {
-            if (currentAdmin[AdminsColumns.AdminTime] < currentDispense[DisposColumns.TransactionDate]) {
-              adminNext = true;
-            }
-          }
-        } else if (currentDispense[DisposColumns.PtID] !== currentPtID) {
-          adminNext = true;
-        } else if (currentAdmin[AdminsColumns.RxNumber] !== currentRxNumber) {
-          if (currentDispense[DisposColumns.RxNumber] !== currentRxNumber) {
-            if (currentAdmin[AdminsColumns.AdminTime] < currentDispense[DisposColumns.TransactionDate]) {
-              adminNext = true;
-            }
-          }
-        } else if (currentDispense[DisposColumns.RxNumber] !== currentRxNumber) {
-          adminNext = true;
+      for (const admin of adminsData) {
+        if (admin[AdminsColumns.Given]) {
+          avdTable.rows.add(
+            undefined,
+            [
+              [
+                admin[AdminsColumns.PtID],
+                admin[AdminsColumns.RxNumber],
+                admin[AdminsColumns.Medication],
+                admin[AdminsColumns.AdminTime],
+                0,
+                admin[AdminsColumns.NumberGiven] ?? 0,
+                0,
+                0,
+              ],
+            ],
+            true
+          );
         }
-        if (adminNext) {
-          currentRxNumber = currentAdmin[AdminsColumns.RxNumber];
-          currentPtID = currentAdmin[AdminsColumns.PtID];
-          if (currentAdmin[AdminsColumns.Given]) {
-            avdTable.rows.add(undefined, [[
-              currentAdmin[AdminsColumns.PtID],
-              currentAdmin[AdminsColumns.RxNumber],
-              currentAdmin[AdminsColumns.Medication],
-              currentAdmin[AdminsColumns.AdminTime],
-              0,
-              currentAdmin[AdminsColumns.NumberGiven] ?? 0,
-              0,
-              0,
-            ]], true);
-          }
-          i++;
-        } else {
-          currentRxNumber = currentDispense[DisposColumns.RxNumber];
-          currentPtID = currentDispense[DisposColumns.PtID];
-          let transType = currentDispense[DisposColumns.TransactionType];
-          const qty = currentDispense[DisposColumns.Quantity];
-          let wasteQty = 0;
+      }
+      for (const disp of disposData) {
+        if (!disp[DisposColumns.RxName].startsWith("*PATIENT SPECIFIC BIN")) {
+          let transType = disp[DisposColumns.TransactionType];
+          const qty: number = disp[DisposColumns.Quantity];
+          let wasteQty: number = 0;
           let issueQty = 0;
           let returnQty = 0;
           if (transType === "I") {
             issueQty = qty;
           } else if (transType === "R") {
-            returnQty = -qty
+            returnQty = -qty;
           } else if (transType === "W") {
             wasteQty = qty;
+          } else {
+            console.log(`unknown transaction type ${transType}`);
+            continue;
           }
-          avdTable.rows.add(undefined, [[
-            currentDispense[DisposColumns.PtID],
-            currentDispense[DisposColumns.RxNumber],
-            currentDispense[DisposColumns.RxName],
-            currentDispense[DisposColumns.TransactionDate],
-            issueQty,
-            0,
-            returnQty,
-            wasteQty,
-          ]], true);
-          j++;
+          avdTable.rows.add(
+            undefined,
+            [
+              [
+                disp[DisposColumns.PtID],
+                disp[DisposColumns.RxNumber],
+                disp[DisposColumns.RxName],
+                disp[DisposColumns.TransactionDate],
+                issueQty,
+                0,
+                returnQty,
+                wasteQty,
+              ],
+            ],
+            true
+          );
         }
-        await context.sync();
       }
+      if (Office.context.requirements.isSetSupported("ExcelApi", "1.2")) {
+        avdTable.getRange().format.autofitRows();
+        avdTable.getRange().format.autofitColumns();
+      }
+      avdTable.getDataBodyRange().sort.apply([
+        { key: 0, ascending: true },
+        { key: 1, ascending: true },
+        { key: 3, ascending: true },
+      ]);
       await context.sync();
     });
   } catch (error) {
     console.error(error);
   }
-
 }
 
 export async function formatTable() {
@@ -351,7 +353,7 @@ const enum AdminsColumns {
   MedStrengthUnits,
   NumberPerDose,
   NumberGiven,
-};
+}
 
 const enum DisposColumns {
   PtID,
@@ -388,4 +390,4 @@ const enum DisposColumns {
   User,
   UserType,
   WitnessID,
-};
+}

@@ -166,7 +166,7 @@ async function* mtLineParser(lineReader: AsyncGenerator<string>): AsyncGenerator
       currentPtName = getField(line, Field.PtName).trim().replace(",", ", ");
       justSawPt = true;
     } else if (justSawPt) {
-      currentPtId = getField(line, Field.PtId);
+      currentPtId = getField(line, Field.PtId).trim();
       justSawPt = false;
     } else if (line.startsWith("Z") || line.startsWith("U")) {
       const number = /[0-9]/;
@@ -263,7 +263,15 @@ async function* mtLineParser(lineReader: AsyncGenerator<string>): AsyncGenerator
         currentDoseAmt = parseFloat(doseStrs[0].replace(",", ""));
         currentDoseUnits = doseStrs[1];
         let strength = readStrength(currentMedication);
-        if (strength) {
+        if (
+          currentDoseUnits === "EACH" ||
+          currentDoseUnits === "ea" ||
+          currentDoseUnits === "EA" ||
+          currentDoseUnits === "each"
+        ) {
+          currentMedStrength = 1;
+          currentMedStrengthUnits = currentDoseUnits;
+        } else if (strength) {
           ({ amount: currentMedStrength, units: currentMedStrengthUnits } = strength);
         } else {
           currentMedStrength = undefined;

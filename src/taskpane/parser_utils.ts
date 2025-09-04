@@ -92,7 +92,7 @@ export function fromOCDate(date: string): Date {
       minutes++;
     }
   }
-  return new Date(year, month + 1, day, hours, minutes);
+  return new Date(year, month, day, hours, minutes);
 }
 
 function isLeapYear(year: number): boolean {
