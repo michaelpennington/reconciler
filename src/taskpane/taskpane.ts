@@ -2,6 +2,7 @@
 
 import { MTFile } from "./parser";
 import { fromOCDate, toOADate } from "./parser_utils";
+import { ignoredMeds } from "./ignore";
 
 Office.onReady((info) => {
   if (info.host === Office.HostType.Excel) {
@@ -11,6 +12,7 @@ Office.onReady((info) => {
     const fileNameDisplay = document.getElementById("fileName") as HTMLElement;
     const fileInput = document.getElementById("fileInput") as HTMLInputElement;
     const analyzeDataButton = document.getElementById("analyzeData") as HTMLButtonElement;
+    const aggregateDataButton = document.getElementById("aggregateData") as HTMLButtonElement;
     if (!appBody || !formatTransactions) {
       throw Error("Failed to find necessary html components!");
     }
@@ -18,6 +20,7 @@ Office.onReady((info) => {
     formatTransactions.onclick = formatTable;
     importButton.onclick = importData;
     analyzeDataButton.onclick = analyzeData;
+    aggregateDataButton.onclick = aggregateData;
 
     fileInput.addEventListener("change", () => {
       if (fileInput.files && fileInput.files.length > 0) {
@@ -33,13 +36,25 @@ Office.onReady((info) => {
   }
 });
 
+type UnifiedRecord = {
+  ptID: string;
+  rxNumber: string;
+  medication: string;
+  mnemonic: string;
+  time: number;
+  dispensed: number;
+  given: number;
+  returned: number;
+  wasted: number;
+};
+
 export async function analyzeData() {
   try {
     await Excel.run(async (context) => {
       const sheets = context.workbook.worksheets;
       const sheet = sheets.add("AdminVDisp");
       sheet.name = "AdminVDisp";
-      let avdTable = sheet.tables.add("A1:H1", true);
+      let avdTable = sheet.tables.add("A1:I1", true);
       avdTable.name = "AdminsVDispenses";
 
       avdTable.load("headerRowRange");
@@ -50,6 +65,7 @@ export async function analyzeData() {
           "PtID",
           "RxNumber",
           "Medication",
+          "Mnemonic",
           "Time",
           "NumberDispensed",
           "NumberGiven",
@@ -70,126 +86,89 @@ export async function analyzeData() {
       await context.sync();
       const adminsData = adminsTable.values;
       const disposData = disposTable.values;
-      let admins = adminsData.values();
-      let dispos = disposData.values();
-      let nextAdmin = admins.next();
-      let nextDispo = dispos.next();
-      let currentMnemonic;
-      let currentRxNumber;
-      let currentPtID;
-      let currentDrugName;
-      let next;
-      while (
-        (nextAdmin && !nextAdmin.done && nextAdmin.value) ||
-        (nextDispo && !nextDispo.done && nextDispo.value)
-      ) {
-        let admin = nextAdmin.value;
-        let dispo = nextDispo.value;
-        if (!nextAdmin || nextAdmin.done || !admin) {
-          next = "dispo";
-        } else if (!nextDispo || nextDispo.done || !dispo) {
-          next = "admin";
-        } else {
-          let adminPtID = admin[AdminsColumns.PtID];
-          let adminRxNumber = admin[AdminsColumns.RxNumber];
-          let adminTime = admin[AdminsColumns.AdminTime];
-          let adminMedication = admin[AdminsColumns.Medication];
-          let dispoPtID = dispo[DisposColumns.PtID];
-          let dispoRxNumber = dispo[DisposColumns.RxNumber];
-          let dispoTime = dispo[DisposColumns.TransactionDate];
-          let dispoMnemonic = dispo[DisposColumns.Mnemonic];
-          if (adminRxNumber !== currentRxNumber) {
-            if (dispoRxNumber !== currentRxNumber) {
-              if (adminPtID !== currentPtID) {
-                if (dispoPtID !== currentPtID) {
-                  if (adminPtID.localeCompare(dispoPtID) < 0) {
-                    currentMnemonic = undefined;
-                    currentRxNumber = adminRxNumber;
-                    currentPtID = adminPtID;
-                    currentDrugName = adminMedication;
-                    next = "admin";
-                  } else if (adminPtID.localeCompare(dispoPtID) > 0) {
-                    currentPtID = dispoPtID;
-                    currentRxNumber = dispoRxNumber;
-                    currentMnemonic = dispoMnemonic;
-                    currentDrugName = dispo[DisposColumns.RxName];
-                    next = "dispo";
-                  } else if (dispoTime < adminTime) {
-                    currentRxNumber = dispoRxNumber;
-                    currentMnemonic = dispoMnemonic;
-                    currentPtID = dispoPtID;
-                    next = "dispo";
-                  } else {
-                    currentRxNumber = adminRxNumber;
-                    // current;
-                    next = "admin";
-                  }
-                } else {
-                }
-              }
-            }
-          }
-        }
-        // if (!admin[AdminsColumns.Given]) {
-        //   continue;
-        // }
-        // if (admin[AdminsColumns.Rx])
-      }
+      let newRecords: Array<UnifiedRecord> = [];
 
       for (const admin of adminsData) {
+        let mnemonic = "";
         if (admin[AdminsColumns.Given]) {
-          avdTable.rows.add(
-            undefined,
-            [
-              [
-                admin[AdminsColumns.PtID],
-                admin[AdminsColumns.RxNumber],
-                admin[AdminsColumns.Medication],
-                admin[AdminsColumns.AdminTime],
-                0,
-                admin[AdminsColumns.NumberGiven] ?? 0,
-                0,
-                0,
-              ],
-            ],
-            true
-          );
+          for (const disp of disposData) {
+            if (disp[DisposColumns.RxNumber] === admin[AdminsColumns.RxNumber]) {
+              mnemonic = disp[DisposColumns.Mnemonic];
+              break;
+            }
+          }
+          newRecords.push({
+            ptID: admin[AdminsColumns.PtID],
+            rxNumber: admin[AdminsColumns.RxNumber],
+            medication: admin[AdminsColumns.Medication],
+            mnemonic,
+            time: admin[AdminsColumns.AdminTime],
+            dispensed: 0,
+            given: admin[AdminsColumns.NumberGiven],
+            returned: 0,
+            wasted: 0,
+          });
         }
       }
-      for (const disp of disposData) {
-        if (!disp[DisposColumns.RxName].startsWith("*PATIENT SPECIFIC BIN")) {
-          let transType = disp[DisposColumns.TransactionType];
-          const qty: number = disp[DisposColumns.Quantity];
-          let wasteQty: number = 0;
-          let issueQty = 0;
-          let returnQty = 0;
-          if (transType === "I") {
-            issueQty = qty;
-          } else if (transType === "R") {
-            returnQty = -qty;
-          } else if (transType === "W") {
-            wasteQty = qty;
-          } else {
-            console.log(`unknown transaction type ${transType}`);
-            continue;
+
+      for (const dispo of disposData) {
+        let medName;
+        for (const admin of adminsData) {
+          if (admin[AdminsColumns.RxNumber] == dispo[DisposColumns.RxNumber]) {
+            medName = admin[AdminsColumns.Medication];
+            break;
           }
-          avdTable.rows.add(
-            undefined,
-            [
-              [
-                disp[DisposColumns.PtID],
-                disp[DisposColumns.RxNumber],
-                disp[DisposColumns.RxName],
-                disp[DisposColumns.TransactionDate],
-                issueQty,
-                0,
-                returnQty,
-                wasteQty,
-              ],
-            ],
-            true
-          );
         }
+        let transType = dispo[DisposColumns.TransactionType];
+        const qty: number = dispo[DisposColumns.Quantity];
+        let wasteQty: number = 0;
+        let issueQty = 0;
+        let returnQty = 0;
+        if (transType === "I") {
+          issueQty = qty;
+        } else if (transType === "R") {
+          returnQty = -qty;
+        } else if (transType === "W") {
+          wasteQty = qty;
+        } else {
+          console.log(`unknown transaction type ${transType}`);
+          continue;
+        }
+        newRecords.push({
+          ptID: dispo[DisposColumns.PtID],
+          rxNumber: dispo[DisposColumns.RxNumber],
+          medication: medName ?? dispo[DisposColumns.RxName],
+          mnemonic: dispo[DisposColumns.Mnemonic],
+          time: dispo[DisposColumns.TransactionDate],
+          dispensed: issueQty,
+          given: 0,
+          returned: returnQty,
+          wasted: wasteQty,
+        });
+      }
+      outer: for (const record of newRecords) {
+        for (const ignored of ignoredMeds) {
+          if (record.medication.startsWith(ignored)) {
+            continue outer;
+          }
+        }
+        avdTable.rows.add(
+          undefined,
+          [
+            [
+              record.ptID,
+              record.rxNumber,
+              record.medication,
+              record.mnemonic,
+              record.time,
+              record.dispensed,
+              record.given,
+              record.returned,
+              record.wasted,
+            ],
+          ],
+          true
+        );
       }
       if (Office.context.requirements.isSetSupported("ExcelApi", "1.2")) {
         avdTable.getRange().format.autofitRows();
@@ -198,8 +177,122 @@ export async function analyzeData() {
       avdTable.getDataBodyRange().sort.apply([
         { key: 0, ascending: true },
         { key: 1, ascending: true },
-        { key: 3, ascending: true },
+        { key: 4, ascending: true },
       ]);
+      avdTable.columns.getItem("Time").getDataBodyRange().numberFormat = [
+        ["[$-409]m/d/yy h:mm AM/PM;@"],
+      ];
+      sheet.activate();
+      await context.sync();
+    });
+  } catch (error) {
+    console.error(error);
+  }
+}
+
+export async function aggregateData() {
+  try {
+    await Excel.run(async (context) => {
+      const avd = context.workbook.worksheets
+        .getItem("AdminVDisp")
+        .tables.getItem("AdminsVDispenses")
+        .getDataBodyRange()
+        .load("values");
+      const sheets = context.workbook.worksheets;
+      const sheet = sheets.add("Aggregate");
+      sheet.name = "Aggregate";
+      let aggTable = sheet.tables.add("A1:H1", true);
+      aggTable.name = "Aggregate";
+      aggTable.load("headerRowRange");
+      await context.sync();
+
+      aggTable.getHeaderRowRange().values = [
+        [
+          "PtID",
+          "RxNumber",
+          "Medication",
+          "Mnemonic",
+          "NumberDispensed",
+          "NumberGiven",
+          "NumberReturned",
+          "NumberWasted",
+        ],
+      ];
+
+      let nextItem = {
+        ptID: undefined,
+        rxNumber: undefined,
+        medication: undefined,
+        mnemonic: undefined,
+        numberDispensed: undefined,
+        numberGiven: undefined,
+        numberReturned: undefined,
+        numberWasted: undefined,
+      };
+
+      let needNewItem = false;
+      let rowCount = 0;
+      for (const row of avd.values) {
+        if (!nextItem.rxNumber) {
+          nextItem.rxNumber = row[1];
+          needNewItem = true;
+        }
+        if (nextItem.rxNumber !== row[1]) {
+          rowCount++;
+          aggTable.rows.add(
+            undefined,
+            [
+              [
+                nextItem.ptID!,
+                nextItem.rxNumber!,
+                nextItem.medication!,
+                nextItem.mnemonic!,
+                nextItem.numberDispensed!,
+                nextItem.numberGiven!,
+                nextItem.numberReturned!,
+                nextItem.numberWasted!,
+              ],
+            ],
+            true
+          );
+          needNewItem = true;
+        }
+
+        if (needNewItem) {
+          nextItem.ptID = row[0];
+          nextItem.rxNumber = row[1];
+          nextItem.medication = row[2];
+          nextItem.mnemonic = row[3];
+          nextItem.numberDispensed = row[5];
+          nextItem.numberGiven = row[6];
+          nextItem.numberReturned = row[7];
+          nextItem.numberWasted = row[8];
+          needNewItem = false;
+        } else {
+          nextItem.numberDispensed += row[5];
+          nextItem.numberGiven += row[6];
+          nextItem.numberReturned += row[7];
+          nextItem.numberWasted += row[8];
+        }
+      }
+
+      let varianceColumn = [];
+      varianceColumn.push(["Variance"]);
+      for (let i = 0; i < rowCount; i++) {
+        varianceColumn.push([
+          "=[@NumberDispensed]-[@NumberGiven]-[@NumberReturned]-[@NumberWasted]",
+        ]);
+      }
+      console.log(varianceColumn);
+      console.log(rowCount);
+      await context.sync();
+      aggTable.columns.add(undefined, varianceColumn);
+
+      sheet.activate();
+      if (Office.context.requirements.isSetSupported("ExcelApi", "1.2")) {
+        aggTable.getRange().format.autofitRows();
+        aggTable.getRange().format.autofitColumns();
+      }
       await context.sync();
     });
   } catch (error) {
