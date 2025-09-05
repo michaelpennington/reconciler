@@ -70,6 +70,72 @@ export async function analyzeData() {
       await context.sync();
       const adminsData = adminsTable.values;
       const disposData = disposTable.values;
+      let admins = adminsData.values();
+      let dispos = disposData.values();
+      let nextAdmin = admins.next();
+      let nextDispo = dispos.next();
+      let currentMnemonic;
+      let currentRxNumber;
+      let currentPtID;
+      let currentDrugName;
+      let next;
+      while (
+        (nextAdmin && !nextAdmin.done && nextAdmin.value) ||
+        (nextDispo && !nextDispo.done && nextDispo.value)
+      ) {
+        let admin = nextAdmin.value;
+        let dispo = nextDispo.value;
+        if (!nextAdmin || nextAdmin.done || !admin) {
+          next = "dispo";
+        } else if (!nextDispo || nextDispo.done || !dispo) {
+          next = "admin";
+        } else {
+          let adminPtID = admin[AdminsColumns.PtID];
+          let adminRxNumber = admin[AdminsColumns.RxNumber];
+          let adminTime = admin[AdminsColumns.AdminTime];
+          let adminMedication = admin[AdminsColumns.Medication];
+          let dispoPtID = dispo[DisposColumns.PtID];
+          let dispoRxNumber = dispo[DisposColumns.RxNumber];
+          let dispoTime = dispo[DisposColumns.TransactionDate];
+          let dispoMnemonic = dispo[DisposColumns.Mnemonic];
+          if (adminRxNumber !== currentRxNumber) {
+            if (dispoRxNumber !== currentRxNumber) {
+              if (adminPtID !== currentPtID) {
+                if (dispoPtID !== currentPtID) {
+                  if (adminPtID.localeCompare(dispoPtID) < 0) {
+                    currentMnemonic = undefined;
+                    currentRxNumber = adminRxNumber;
+                    currentPtID = adminPtID;
+                    currentDrugName = adminMedication;
+                    next = "admin";
+                  } else if (adminPtID.localeCompare(dispoPtID) > 0) {
+                    currentPtID = dispoPtID;
+                    currentRxNumber = dispoRxNumber;
+                    currentMnemonic = dispoMnemonic;
+                    currentDrugName = dispo[DisposColumns.RxName];
+                    next = "dispo";
+                  } else if (dispoTime < adminTime) {
+                    currentRxNumber = dispoRxNumber;
+                    currentMnemonic = dispoMnemonic;
+                    currentPtID = dispoPtID;
+                    next = "dispo";
+                  } else {
+                    currentRxNumber = adminRxNumber;
+                    // current;
+                    next = "admin";
+                  }
+                } else {
+                }
+              }
+            }
+          }
+        }
+        // if (!admin[AdminsColumns.Given]) {
+        //   continue;
+        // }
+        // if (admin[AdminsColumns.Rx])
+      }
+
       for (const admin of adminsData) {
         if (admin[AdminsColumns.Given]) {
           avdTable.rows.add(
