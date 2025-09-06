@@ -12,6 +12,10 @@ export const enum Field {
   PtScanned,
   Dose,
   AdminDose,
+  Schedule,
+  Prn,
+  Location,
+  PrnReason,
 }
 
 const fields: Array<Array<number>> = [
@@ -28,6 +32,10 @@ const fields: Array<Array<number>> = [
   [135, 136],
   [12, 32],
   [139, 151],
+  [44, 64],
+  [65, 72],
+  [40, 59],
+  [13, 53],
 ] as const;
 
 export function getField(line: string, field: Field): string {

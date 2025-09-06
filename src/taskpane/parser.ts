@@ -103,6 +103,10 @@ export class EMARLineItem {
   medStrengthUnits: string | undefined;
   countPerDose: number | undefined;
   countGiven: number | undefined;
+  schedule: string;
+  orderType: string;
+  location: string;
+  prnReason: string;
 
   constructor(
     rxNum: string,
@@ -123,7 +127,11 @@ export class EMARLineItem {
     medStrength: number | undefined,
     medStrengthUnits: string | undefined,
     countPerDose: number | undefined,
-    countGiven: number | undefined
+    countGiven: number | undefined,
+    schedule: string,
+    orderType: string,
+    location: string,
+    prnReason: string,
   ) {
     this.rxNum = rxNum;
     this.ptName = ptName;
@@ -144,6 +152,10 @@ export class EMARLineItem {
     this.medStrengthUnits = medStrengthUnits;
     this.countPerDose = countPerDose;
     this.countGiven = countGiven;
+    this.schedule = schedule;
+    this.orderType = orderType;
+    this.location = location;
+    this.prnReason = prnReason;
   }
 }
 
@@ -161,12 +173,22 @@ async function* mtLineParser(lineReader: AsyncGenerator<string>): AsyncGenerator
   let currentDoseUnits = "";
   let currentMedStrength = undefined;
   let currentMedStrengthUnits = undefined;
+  let currentSchedule = "";
+  let currentOrderType = "";
+  let currentLocation = "";
+  let lookingForPRNReason = false;
+  let doseAmt;
+  let units;
+  let currentDosePerUnits = undefined;
+  let currentPRNReason = "";
   for await (let line of lineReader) {
+    let readyToSubmit = false;
     if (line.startsWith("Patient")) {
       currentPtName = getField(line, Field.PtName).trim().replace(",", ", ");
       justSawPt = true;
     } else if (justSawPt) {
       currentPtId = getField(line, Field.PtId).trim();
+      currentLocation = getField(line, Field.Location).trim();
       justSawPt = false;
     } else if (line.startsWith("Z") || line.startsWith("U")) {
       const number = /[0-9]/;
@@ -182,8 +204,10 @@ async function* mtLineParser(lineReader: AsyncGenerator<string>): AsyncGenerator
     } else if (line.startsWith("       Dose")) {
       readingAdmins = false;
       let doseStr = getField(line, Field.Dose).trim();
-      let doseAmt;
-      let units;
+      currentSchedule = getField(line, Field.Schedule).trim();
+      currentOrderType = getField(line, Field.Prn).trim();
+      doseAmt = undefined;
+      units = undefined;
       if (doseStr.startsWith("See Taper")) {
         doseAmt = currentDoseAmt;
         units = currentDoseUnits;
@@ -204,46 +228,20 @@ async function* mtLineParser(lineReader: AsyncGenerator<string>): AsyncGenerator
         console.log(currentRx, currentPtName, currentPtId, doseAmt, units);
         throw new Error(`Dose amount is not equal! on line ${lineNo}`);
       }
-      let dosePerUnits = undefined;
+      currentDosePerUnits = undefined;
       if (
         currentMedStrength &&
         currentMedStrengthUnits &&
         currentMedStrengthUnits === currentDoseUnits
       ) {
-        dosePerUnits = currentDoseAmt / currentMedStrength;
+        currentDosePerUnits = currentDoseAmt / currentMedStrength;
       }
-      while (adminStack.length > 0) {
-        let admin = adminStack.shift() as AdminDetails;
-        let countGiven = undefined;
-        if (
-          currentMedStrength &&
-          currentMedStrengthUnits &&
-          currentMedStrengthUnits === admin.adminUnits &&
-          admin.given
-        ) {
-          countGiven = admin.adminDoseAmt / currentMedStrength;
-        }
-        yield new EMARLineItem(
-          currentRx,
-          currentPtName,
-          currentPtId,
-          currentMedication,
-          admin.adminTime,
-          admin.filedTime,
-          admin.schedTime,
-          admin.user,
-          admin.given,
-          admin.rxScanned,
-          admin.ptScanned,
-          doseAmt,
-          units,
-          admin.adminDoseAmt,
-          admin.adminUnits,
-          currentMedStrength,
-          currentMedStrengthUnits,
-          dosePerUnits,
-          countGiven
-        );
+      if (adminStack.length > 0 && adminStack[0].schedTime === undefined) {
+        console.log(adminStack.slice());
+        lookingForPRNReason = true;
+      } else {
+        readyToSubmit = true;
+        currentPRNReason = "";
       }
     } else if (readingMedication) {
       let newMedString = getField(line, Field.Medication);
@@ -280,11 +278,62 @@ async function* mtLineParser(lineReader: AsyncGenerator<string>): AsyncGenerator
       } else {
         currentMedication += " " + newMedString.trim();
       }
+    } else if (lookingForPRNReason) {
+      if (line.startsWith(" PRN Reason")) {
+        currentPRNReason = getField(line, Field.PrnReason).trim();
+      }
+      lookingForPRNReason = false;
+      readyToSubmit = true;
     }
     if (readingAdmins) {
       let admin = readAdminDetails(line);
       if (admin !== null) {
         adminStack.push(admin);
+      }
+    }
+    if (readyToSubmit) {
+      while (adminStack.length > 0) {
+        let admin = adminStack.shift() as AdminDetails;
+        let countGiven = undefined;
+        if (
+          currentMedStrength &&
+          currentMedStrengthUnits &&
+          currentMedStrengthUnits === admin.adminUnits &&
+          admin.given
+        ) {
+          countGiven = admin.adminDoseAmt / currentMedStrength;
+        } else if (!admin.given) {
+          countGiven = 0;
+        }
+        if (!currentRx || !currentPtName || !currentPtId || (!doseAmt && doseAmt != 0) || !units) {
+          console.log(currentRx, currentPtName, currentPtId, doseAmt, units);
+          throw new Error(`Found Dose line before finding an Rx or Pt! on line ${lineNo}`);
+        }
+        yield new EMARLineItem(
+          currentRx,
+          currentPtName,
+          currentPtId,
+          currentMedication,
+          admin.adminTime,
+          admin.filedTime,
+          admin.schedTime,
+          admin.user,
+          admin.given,
+          admin.rxScanned,
+          admin.ptScanned,
+          doseAmt,
+          units,
+          admin.adminDoseAmt,
+          admin.adminUnits,
+          currentMedStrength,
+          currentMedStrengthUnits,
+          currentDosePerUnits,
+          countGiven,
+          currentSchedule,
+          currentOrderType,
+          mapUnit(currentLocation),
+          currentPRNReason,
+        );
       }
     }
     lineNo++;
@@ -311,7 +360,7 @@ class AdminDetails {
     rxScanned: boolean,
     ptScanned: boolean,
     adminDoseAmt: number,
-    adminUnits: string
+    adminUnits: string,
   ) {
     this.adminTime = adminTime;
     this.filedTime = filedTime;
@@ -354,6 +403,8 @@ const UNITS: Array<string> = [
   "ml",
   "GM",
   "gm",
+  "unit",
+  "UNIT",
 ];
 
 function readStrength(medication: string): { amount: number; units: string } | undefined {
@@ -394,6 +445,26 @@ function readStrength(medication: string): { amount: number; units: string } | u
   }
 }
 
+function mapUnit(unit: string): string {
+  switch (unit) {
+    case "IP.CHILD":
+      return "OSGOOD1";
+    case "IP.ADOL1":
+      return "OSGOOD2";
+    case "IP.ADOL2":
+      return "OSGOOD3";
+    case "IP.ALGBT":
+      return "TYLER1";
+    case "IP.ADULT":
+      return "TYLER2";
+    case "IP.AIU2":
+      return "TYLER3";
+    case "IP.AIU1":
+      return "TYLER4";
+  }
+  return "UNKNOWNUNIT";
+}
+
 function readAdminDetails(line: string): AdminDetails | null {
   const schedTimeText = getField(line, Field.SchedTime);
   let schedTime = undefined;
@@ -421,6 +492,6 @@ function readAdminDetails(line: string): AdminDetails | null {
     rxScanned,
     ptScanned,
     adminDoseAmt,
-    adminUnits
+    adminUnits,
   );
 }
