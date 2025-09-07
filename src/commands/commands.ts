@@ -4,7 +4,7 @@
  */
 
 /* global Office, console */
-import { analyzeData, formatTable } from "../controller";
+import { analyzeData, formatTable, processImportData } from "../controller";
 
 Office.onReady(() => {
   // If needed, Office.js is ready to be called.
@@ -23,6 +23,8 @@ function importData(event: Office.AddinCommands.Event) {
         dialog = result.value;
         dialog.addEventHandler(Office.EventType.DialogMessageReceived, async (arg: any) => {
           dialog.close();
+
+          console.log("Is processImportData defined?", typeof processImportData);
 
           if (arg.message === "error") {
             console.error("Error received from dialog during file read.");
