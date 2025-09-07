@@ -167,7 +167,6 @@ export async function* mtLineParser(lines: string[]): AsyncGenerator<EMARLineIte
         currentDosePerUnits = currentDoseAmt / currentMedStrength;
       }
       if (adminStack.length > 0 && adminStack[0].schedTime === undefined) {
-        console.log(adminStack.slice());
         lookingForPRNReason = true;
       } else {
         readyToSubmit = true;
