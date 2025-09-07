@@ -307,6 +307,36 @@ export async function analyzeData() {
 
 export async function processImportData(mtFile: MTFile) {
   try {
+    const dataRows = [];
+    for await (const line of mtFile) {
+      dataRows.push([
+        line.rxNum,
+        line.ptName,
+        line.ptId,
+        line.medication,
+        toOADate(line.adminTime) ?? "UNKNOWN",
+        toOADate(line.filedTime) ?? "UNKNOWN",
+        toOADate(line.schedTime) ?? "PRN",
+        line.user,
+        line.given,
+        line.rxScanned,
+        line.ptScanned,
+        line.doseAmt,
+        line.units,
+        line.adminDoseAmt,
+        line.adminUnits,
+        line.medStrength ?? "UNKNOWN",
+        line.medStrengthUnits ?? "UNKNOWN",
+        line.countPerDose ?? "UNKNOWN",
+        line.countGiven ?? "UNKNOWN",
+        line.schedule,
+        line.orderType,
+        line.location,
+        line.prnReason,
+      ]);
+    }
+    console.log("File Processing complete.");
+
     await Excel.run(async (context) => {
       const sheets = context.workbook.worksheets;
       const sheet = sheets.add("Admins");
@@ -344,41 +374,11 @@ export async function processImportData(mtFile: MTFile) {
           "PRNReason",
         ],
       ];
-      for await (const line of mtFile) {
-        console.log(line);
-        adminsTable.rows.add(
-          undefined,
-          [
-            [
-              line.rxNum,
-              line.ptName,
-              line.ptId,
-              line.medication,
-              toOADate(line.adminTime) ?? "UNKNOWN",
-              toOADate(line.filedTime) ?? "UNKNOWN",
-              toOADate(line.schedTime) ?? "PRN",
-              line.user,
-              line.given,
-              line.rxScanned,
-              line.ptScanned,
-              line.doseAmt,
-              line.units,
-              line.adminDoseAmt,
-              line.adminUnits,
-              line.medStrength ?? "UNKNOWN",
-              line.medStrengthUnits ?? "UNKNOWN",
-              line.countPerDose ?? "UNKNOWN",
-              line.countGiven ?? "UNKNOWN",
-              line.schedule,
-              line.orderType,
-              line.location,
-              line.prnReason,
-            ],
-          ],
-          true,
-        );
+
+      if (dataRows.length > 0) {
+        adminsTable.rows.add(undefined, dataRows, true);
       }
-      console.log("File Processing complete.");
+
       if (Office.context.requirements.isSetSupported("ExcelApi", "1.2")) {
         adminsTable.getRange().format.autofitRows();
         adminsTable.getRange().format.autofitColumns();
@@ -399,11 +399,14 @@ export async function processImportData(mtFile: MTFile) {
       rxNumColumn.load("index");
       timeColumn.load("index");
       await context.sync();
-      adminsTable.getDataBodyRange().sort.apply([
-        { key: ptIDColumn.index, ascending: true },
-        { key: rxNumColumn.index, ascending: true },
-        { key: timeColumn.index, ascending: true },
-      ]);
+
+      if (dataRows.length > 0) {
+        adminsTable.getDataBodyRange().sort.apply([
+          { key: ptIDColumn.index, ascending: true },
+          { key: rxNumColumn.index, ascending: true },
+          { key: timeColumn.index, ascending: true },
+        ]);
+      }
 
       sheet.activate();
       await context.sync();
