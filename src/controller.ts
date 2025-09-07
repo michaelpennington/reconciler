@@ -2,7 +2,7 @@
 
 import { fromOCDate, toOADate } from "./taskpane/parser_utils";
 import { ignoredMeds } from "./taskpane/ignore";
-import { MTFile } from "./taskpane/parser";
+import { mtLineParser, EMARLineItem } from "./taskpane/parser";
 
 type UnifiedRecord = {
   ptID: string;
@@ -305,10 +305,11 @@ export async function analyzeData() {
   }
 }
 
-export async function processImportData(mtFile: MTFile) {
+export async function processImportData(fileContent: string) {
   try {
+    const lines = fileContent.replace(/\r/g, "").split("\n");
     const dataRows = [];
-    for await (const line of mtFile) {
+    for await (const line of mtLineParser(lines)) {
       dataRows.push([
         line.rxNum,
         line.ptName,
@@ -338,14 +339,9 @@ export async function processImportData(mtFile: MTFile) {
     console.log("File Processing complete.");
 
     await Excel.run(async (context) => {
-      const sheets = context.workbook.worksheets;
-      const sheet = sheets.add("Admins");
-      sheet.name = "Admins";
+      const sheet = context.workbook.worksheets.add("Admins");
       let adminsTable = sheet.tables.add("A1:W1", true);
       adminsTable.name = "Admins";
-
-      adminsTable.load("headerRowRange");
-      await context.sync();
 
       adminsTable.getHeaderRowRange().values = [
         [
@@ -376,7 +372,7 @@ export async function processImportData(mtFile: MTFile) {
       ];
 
       if (dataRows.length > 0) {
-        adminsTable.rows.add(undefined, dataRows, true);
+        adminsTable.rows.add(undefined, dataRows);
       }
 
       if (Office.context.requirements.isSetSupported("ExcelApi", "1.2")) {
@@ -392,15 +388,16 @@ export async function processImportData(mtFile: MTFile) {
       adminsTable.columns.getItem("SchedTime").getDataBodyRange().numberFormat = [
         ["[$-409]m/d/yy h:mm AM/PM;@"],
       ];
-      const ptIDColumn = adminsTable.columns.getItem("PtID");
-      const rxNumColumn = adminsTable.columns.getItem("RxNumber");
-      const timeColumn = adminsTable.columns.getItem("AdminTime");
-      ptIDColumn.load("index");
-      rxNumColumn.load("index");
-      timeColumn.load("index");
-      await context.sync();
 
       if (dataRows.length > 0) {
+        const ptIDColumn = adminsTable.columns.getItem("PtID");
+        const rxNumColumn = adminsTable.columns.getItem("RxNumber");
+        const timeColumn = adminsTable.columns.getItem("AdminTime");
+        ptIDColumn.load("index");
+        rxNumColumn.load("index");
+        timeColumn.load("index");
+        await context.sync();
+
         adminsTable.getDataBodyRange().sort.apply([
           { key: ptIDColumn.index, ascending: true },
           { key: rxNumColumn.index, ascending: true },

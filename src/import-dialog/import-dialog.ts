@@ -1,36 +1,27 @@
-/* global console, document, Excel, Office */
-
-import { MTFile } from "../taskpane/parser";
-import { processImportData } from "../controller";
+/* global console, document, Office, FileReader */
 
 Office.onReady((info) => {
   if (info.host === Office.HostType.Excel) {
     const fileInput = document.getElementById("fileInput") as HTMLInputElement;
 
     fileInput.addEventListener("change", () => {
-      if (fileInput.files && fileInput.files.length > 0) {
-        importData();
+      const file = fileInput.files[0];
+      if (file) {
+        const reader = new FileReader();
+
+        reader.onload = (event) => {
+          const fileContent = event.target.result as string;
+          Office.context.ui.messageParent(fileContent);
+        };
+
+        reader.onerror = (event) => {
+          console.error("File could not be read! Code " + event.target.error.code);
+          // Let the parent know something went wrong.
+          Office.context.ui.messageParent("error");
+        };
+
+        reader.readAsText(file, "latin1");
       }
     });
   }
 });
-
-export async function importData() {
-  try {
-    const fileInput = document.getElementById("fileInput") as HTMLInputElement;
-
-    if (fileInput.files?.length === 0) {
-      console.error("No file selected.");
-      return;
-    }
-
-    const file = (fileInput.files as FileList)[0];
-
-    const mtFile = new MTFile(file);
-    await processImportData(mtFile);
-    Office.context.ui.messageParent("success");
-  } catch (error) {
-    console.error("An error occured while reading the file: ", error);
-    Office.context.ui.messageParent("error");
-  }
-}

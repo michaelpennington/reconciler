@@ -21,8 +21,20 @@ function importData(event: Office.AddinCommands.Event) {
         console.error(result.error.message);
       } else {
         dialog = result.value;
-        dialog.addEventHandler(Office.EventType.DialogMessageReceived, (arg: any) => {
+        dialog.addEventHandler(Office.EventType.DialogMessageReceived, async (arg: any) => {
           dialog.close();
+
+          if (arg.message === "error") {
+            console.error("Error received from dialog during file read.");
+          } else {
+            try {
+              await processImportData(arg.message);
+            } catch (e) {
+              console.error("Error processing file:", e);
+              // Optionally, you could show a notification to the user here.
+            }
+          }
+
           event.completed();
         });
         dialog.addEventHandler(Office.EventType.DialogEventReceived, (arg: any) => {
