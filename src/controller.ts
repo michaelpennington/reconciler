@@ -410,6 +410,7 @@ export async function processImportData(mtFile: MTFile) {
     });
   } catch (error) {
     console.error("An error occured while reading the file: ", error);
+    throw error;
   }
 }
 

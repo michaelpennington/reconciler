@@ -5,21 +5,13 @@ import { processImportData } from "../controller";
 
 Office.onReady((info) => {
   if (info.host === Office.HostType.Excel) {
-    const importButton = document.getElementById("importButton") as HTMLButtonElement;
-    const fileNameDisplay = document.getElementById("fileName") as HTMLElement;
     const fileInput = document.getElementById("fileInput") as HTMLInputElement;
 
     fileInput.addEventListener("change", () => {
       if (fileInput.files && fileInput.files.length > 0) {
-        fileNameDisplay.textContent = fileInput.files[0].name;
-        importButton.disabled = false;
-      } else {
-        fileNameDisplay.textContent = "No file chosen";
-        importButton.disabled = true;
+        importData();
       }
     });
-
-    importButton.onclick = importData;
   }
 });
 
