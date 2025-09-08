@@ -50,7 +50,7 @@ jobs:
 
       - name: Push Changes to Repository
         # This pushes the new commit (with version bumps and changelog) and the new tag.
-        run: git push --follow-tags origin main
+        run: git push --follow-tags origin master
 
       # The following steps are for building and deploying the new version.
       - name: Build Project
