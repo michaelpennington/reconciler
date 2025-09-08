@@ -39,6 +39,7 @@ export class EMARLineItem {
   orderType: string;
   location: string;
   prnReason: string;
+  refReason: string | undefined;
 
   constructor(
     rxNum: string,
@@ -63,7 +64,8 @@ export class EMARLineItem {
     schedule: string,
     orderType: string,
     location: string,
-    prnReason: string
+    prnReason: string,
+    refReason: string | undefined
   ) {
     this.rxNum = rxNum;
     this.ptName = ptName;
@@ -88,6 +90,7 @@ export class EMARLineItem {
     this.orderType = orderType;
     this.location = location;
     this.prnReason = prnReason;
+    this.refReason = refReason;
   }
 }
 
@@ -264,7 +267,8 @@ export async function* mtLineParser(lines: string[]): AsyncGenerator<EMARLineIte
           currentSchedule,
           currentOrderType,
           mapUnit(currentLocation),
-          currentPRNReason
+          currentPRNReason,
+          admin.refReason
         );
       }
     }
@@ -282,6 +286,7 @@ class AdminDetails {
   ptScanned: boolean;
   adminDoseAmt: number;
   adminUnits: string;
+  refReason: string | undefined;
 
   constructor(
     adminTime: Date,
@@ -292,7 +297,8 @@ class AdminDetails {
     rxScanned: boolean,
     ptScanned: boolean,
     adminDoseAmt: number,
-    adminUnits: string
+    adminUnits: string,
+    refReason: string | undefined
   ) {
     this.adminTime = adminTime;
     this.filedTime = filedTime;
@@ -303,6 +309,7 @@ class AdminDetails {
     this.ptScanned = ptScanned;
     this.adminDoseAmt = adminDoseAmt;
     this.adminUnits = adminUnits;
+    this.refReason = refReason;
   }
 }
 
@@ -413,6 +420,17 @@ function mapUnit(unit: string): string {
   return "UNKNOWNUNIT";
 }
 
+function mapRefReason(reason: string): string {
+  switch (reason) {
+    case "PAA":
+      return "Patient is sleeping";
+    case "REF":
+      return "Patient refused";
+    default:
+      return `Unknown refusal reason ${reason}`;
+  }
+}
+
 function readAdminDetails(line: string): AdminDetails | null {
   const schedTimeText = getField(line, Field.SchedTime);
   let schedTime = undefined;
@@ -431,6 +449,10 @@ function readAdminDetails(line: string): AdminDetails | null {
   let doseStrs = getField(line, Field.AdminDose).trim().split(" ");
   let adminDoseAmt = parseFloat(doseStrs[0].replace(",", ""));
   let adminUnits = doseStrs[1];
+  let refReason;
+  if (!given) {
+    refReason = mapRefReason(getField(line, Field.RefReason).trim());
+  }
   return new AdminDetails(
     adminTime,
     filedTime,
@@ -440,6 +462,7 @@ function readAdminDetails(line: string): AdminDetails | null {
     rxScanned,
     ptScanned,
     adminDoseAmt,
-    adminUnits
+    adminUnits,
+    refReason
   );
 }

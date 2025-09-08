@@ -16,6 +16,7 @@ export const enum Field {
   Prn,
   Location,
   PrnReason,
+  RefReason,
 }
 
 const fields: Array<Array<number>> = [
@@ -36,6 +37,7 @@ const fields: Array<Array<number>> = [
   [65, 72],
   [40, 59],
   [13, 53],
+  [152, 155],
 ] as const;
 
 export function getField(line: string, field: Field): string {

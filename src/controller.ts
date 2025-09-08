@@ -45,6 +45,7 @@ const enum AdminsColumns {
   OrderType,
   Unit,
   PRNReason,
+  RefReason,
 }
 
 const enum DisposColumns {
@@ -334,13 +335,14 @@ export async function processImportData(fileContent: string) {
         line.orderType,
         line.location,
         line.prnReason,
+        line.refReason ?? "",
       ]);
     }
     console.log("File Processing complete.");
 
     await Excel.run(async (context) => {
       const sheet = context.workbook.worksheets.add("Admins");
-      let adminsTable = sheet.tables.add("A1:W1", true);
+      let adminsTable = sheet.tables.add("A1:X1", true);
       adminsTable.name = "Admins";
 
       adminsTable.getHeaderRowRange().values = [
@@ -368,6 +370,7 @@ export async function processImportData(fileContent: string) {
           "OrderType",
           "Unit",
           "PRNReason",
+          "RefusedReason",
         ],
       ];
 
