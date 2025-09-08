@@ -28,11 +28,6 @@
     <Hosts>
       <Host xsi:type="Workbook">
         <DesktopFormFactor>
-          <GetStarted>
-            <Title resid="GetStarted.Title"/>
-            <Description resid="GetStarted.Description"/>
-            <LearnMoreUrl resid="GetStarted.LearnMoreUrl"/>
-          </GetStarted>
           <FunctionFile resid="Commands.Url"/>
           <ExtensionPoint xsi:type="PrimaryCommandSurface">
             <OfficeTab id="TabHome">
@@ -101,19 +96,16 @@
         <bt:Image id="Icon.80x80" DefaultValue="https://localhost:3000/assets/icon-80.png"/>
       </bt:Images>
       <bt:Urls>
-        <bt:Url id="GetStarted.LearnMoreUrl" DefaultValue="https://go.microsoft.com/fwlink/?LinkId=276812"/>
         <bt:Url id="Commands.Url" DefaultValue="https://localhost:3000/commands.html"/>
         <bt:Url id="ImportDialog.Url" DefaultValue="https://localhost:3000/import-dialog.html"/>
       </bt:Urls>
       <bt:ShortStrings>
-        <bt:String id="GetStarted.Title" DefaultValue="Get started with your sample add-in!"/>
         <bt:String id="CommandsGroup.Label" DefaultValue="Reconciliation"/>
         <bt:String id="ImportButton.Label" DefaultValue="Import Administrations"/>
         <bt:String id="FormatButton.Label" DefaultValue="Format Transactions"/>
         <bt:String id="AnalyzeButton.Label" DefaultValue="Analyze Data"/>
       </bt:ShortStrings>
       <bt:LongStrings>
-        <bt:String id="GetStarted.Description" DefaultValue="Your sample add-in loaded successfully. Go to the HOME tab and click the 'Show Task Pane' button to get started."/>
         <bt:String id="ImportButton.Tooltip" DefaultValue="Imports a Meditech administration record file."/>
         <bt:String id="FormatButton.Tooltip" DefaultValue="Formats the current sheet as a transaction table."/>
         <bt:String id="AnalyzeButton.Tooltip" DefaultValue="Analyzes the imported administrations and formatted transactions."/>
