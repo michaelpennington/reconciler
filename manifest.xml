@@ -10,7 +10,7 @@
   <HighResolutionIconUrl DefaultValue="https://localhost:3000/assets/icon-64.png"/>
   <SupportUrl DefaultValue="mailto:michaeldanielpennington@gmail.com"/>
   <AppDomains>
-    <AppDomain>https://localhost:3000</AppDomain>
+    <AppDomain>https://rmain.z13.web.core.windows.net</AppDomain>
   </AppDomains>
   <Hosts>
     <Host Name="Workbook"/>
