@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [1.0.6](https://github.com/OfficeDev/Office-Addin-TaskPane/compare/v1.0.5...v1.0.6) (2025-09-08)
+
+
+### Bug Fixes
+
+* **release:** correctly update version in manifest.xml ([a898210](https://github.com/OfficeDev/Office-Addin-TaskPane/commit/a898210d219059cbccb19342981e21c71d4fbe93))
+
 ### 1.0.5 (2025-09-08)
 
 
