@@ -436,7 +436,10 @@ function readAdminDetails(line: string): AdminDetails | null {
   let schedTime = undefined;
   if (schedTimeText !== "NON-SCHEDULED") {
     schedTime = parseMTDate(schedTimeText);
-    if (!isValidDate(schedTime)) {
+    if (
+      !isValidDate(schedTime) ||
+      (getField(line, Field.Given) !== "Y" && getField(line, Field.Given) !== "N")
+    ) {
       return null;
     }
   }
