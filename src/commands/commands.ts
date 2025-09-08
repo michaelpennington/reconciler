@@ -24,8 +24,6 @@ function importData(event: Office.AddinCommands.Event) {
         dialog.addEventHandler(Office.EventType.DialogMessageReceived, async (arg: any) => {
           dialog.close();
 
-          console.log("Is processImportData defined?", typeof processImportData);
-
           if (arg.message === "error") {
             console.error("Error received from dialog during file read.");
           } else {
