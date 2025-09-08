@@ -15,8 +15,13 @@
   <Hosts>
     <Host Name="Workbook"/>
   </Hosts>
+  <Requirements>
+    <Sets DefaultMinVersion="1.1">
+      <Set Name="ExcelApi" MinVersion="1.1"/>
+    </Sets>
+  </Requirements>
   <DefaultSettings>
-    <SourceLocation DefaultValue="https://localhost:3000/taskpane.html"/>
+    <SourceLocation DefaultValue="https://localhost:3000/commands.html"/>
   </DefaultSettings>
   <Permissions>ReadWriteDocument</Permissions>
   <VersionOverrides xmlns="http://schemas.microsoft.com/office/taskpaneappversionoverrides" xsi:type="VersionOverridesV1_0">
@@ -38,20 +43,49 @@
                   <bt:Image size="32" resid="Icon.32x32"/>
                   <bt:Image size="80" resid="Icon.80x80"/>
                 </Icon>
-                <Control xsi:type="Button" id="TaskpaneButton">
-                  <Label resid="TaskpaneButton.Label"/>
+                <Control xsi:type="Button" id="ImportButton">
+                  <Label resid="ImportButton.Label"/>
                   <Supertip>
-                    <Title resid="TaskpaneButton.Label"/>
-                    <Description resid="TaskpaneButton.Tooltip"/>
+                    <Title resid="ImportButton.Label"/>
+                    <Description resid="ImportButton.Tooltip"/>
                   </Supertip>
                   <Icon>
                     <bt:Image size="16" resid="Icon.16x16"/>
                     <bt:Image size="32" resid="Icon.32x32"/>
                     <bt:Image size="80" resid="Icon.80x80"/>
                   </Icon>
-                  <Action xsi:type="ShowTaskpane">
-                    <TaskpaneId>ButtonId1</TaskpaneId>
-                    <SourceLocation resid="Taskpane.Url"/>
+                  <Action xsi:type="ExecuteFunction">
+                    <FunctionName>importData</FunctionName>
+                  </Action>
+                </Control>
+                <Control xsi:type="Button" id="FormatButton">
+                  <Label resid="FormatButton.Label"/>
+                  <Supertip>
+                    <Title resid="FormatButton.Label"/>
+                    <Description resid="FormatButton.Tooltip"/>
+                  </Supertip>
+                  <Icon>
+                    <bt:Image size="16" resid="Icon.16x16"/>
+                    <bt:Image size="32" resid="Icon.32x32"/>
+                    <bt:Image size="80" resid="Icon.80x80"/>
+                  </Icon>
+                  <Action xsi:type="ExecuteFunction">
+                    <FunctionName>formatTable</FunctionName>
+                  </Action>
+                </Control>
+                <Control xsi:type="Button" id="AnalyzeButton">
+                  <Label resid="AnalyzeButton.Label"/>
+                  <Supertip>
+                    <Title resid="AnalyzeButton.Label"/>
+                    <Description resid="AnalyzeButton.Tooltip"/>
+                  </Supertip>
+                  <Icon>
+                    <bt:Image size="16" resid="Icon.16x16"/>
+                    <bt:Image size="32" resid="Icon.32x32"/>
+                    <bt:Image size="80" resid="Icon.80x80"/>
+                  </Icon>
+                  <Action xsi:type="ExecuteFunction">
+                    <FunctionName>analyzeData</FunctionName>
                   </Action>
                 </Control>
               </Group>
@@ -69,16 +103,20 @@
       <bt:Urls>
         <bt:Url id="GetStarted.LearnMoreUrl" DefaultValue="https://go.microsoft.com/fwlink/?LinkId=276812"/>
         <bt:Url id="Commands.Url" DefaultValue="https://localhost:3000/commands.html"/>
-        <bt:Url id="Taskpane.Url" DefaultValue="https://localhost:3000/taskpane.html"/>
+        <bt:Url id="ImportDialog.Url" DefaultValue="https://localhost:3000/import-dialog.html"/>
       </bt:Urls>
       <bt:ShortStrings>
         <bt:String id="GetStarted.Title" DefaultValue="Get started with your sample add-in!"/>
-        <bt:String id="CommandsGroup.Label" DefaultValue="Commands Group"/>
-        <bt:String id="TaskpaneButton.Label" DefaultValue="Show Task Pane"/>
+        <bt:String id="CommandsGroup.Label" DefaultValue="Reconciliation"/>
+        <bt:String id="ImportButton.Label" DefaultValue="Import Administrations"/>
+        <bt:String id="FormatButton.Label" DefaultValue="Format Transactions"/>
+        <bt:String id="AnalyzeButton.Label" DefaultValue="Analyze Data"/>
       </bt:ShortStrings>
       <bt:LongStrings>
         <bt:String id="GetStarted.Description" DefaultValue="Your sample add-in loaded successfully. Go to the HOME tab and click the 'Show Task Pane' button to get started."/>
-        <bt:String id="TaskpaneButton.Tooltip" DefaultValue="Click to Show a Taskpane"/>
+        <bt:String id="ImportButton.Tooltip" DefaultValue="Imports a Meditech administration record file."/>
+        <bt:String id="FormatButton.Tooltip" DefaultValue="Formats the current sheet as a transaction table."/>
+        <bt:String id="AnalyzeButton.Tooltip" DefaultValue="Analyzes the imported administrations and formatted transactions."/>
       </bt:LongStrings>
     </Resources>
   </VersionOverrides>

@@ -1,74 +1,4 @@
-import { readFileLines } from "./filelinesreader";
-
 import { Field, getField } from "./parser_utils";
-
-export class MTFile implements AsyncIterable<EMARLineItem> {
-  private fromDate: Date | undefined = undefined;
-  private thruDate: Date | undefined = undefined;
-  private lineParser: AsyncGenerator<EMARLineItem> | null = null;
-  private readonly lineReader: AsyncGenerator<string>;
-
-  constructor(file: File) {
-    this.lineReader = readFileLines(file);
-  }
-
-  [Symbol.asyncIterator](): AsyncIterator<EMARLineItem, any, any> {
-    return this;
-  }
-
-  async initialize() {
-    if (!this.lineParser) {
-      let counter = 0;
-      let result = await this.lineReader.next();
-      while (!result.done) {
-        if (result.value.includes("From Date-Time")) {
-          this.fromDate = parseMTDate(result.value.slice(34, 47));
-        } else if (result.value.includes("Thru Date-Time")) {
-          this.thruDate = parseMTDate(result.value.slice(34, 47));
-        }
-
-        if (this.fromDate && this.thruDate) {
-          break;
-        }
-        if (counter > 10) {
-          throw new Error("Are you sure you have the right file?");
-        }
-        counter++;
-        result = await this.lineReader.next();
-      }
-      console.log("Data from: ", this.fromDate);
-      console.log("Data thru: ", this.thruDate);
-      this.lineParser = mtLineParser(this.lineReader);
-    }
-  }
-
-  async next(): Promise<IteratorResult<EMARLineItem, any>> {
-    if (!this.lineParser) {
-      await this.initialize();
-    }
-    // SAFETY: We called initialize if it was null, and only make it
-    // thus far if initialization was successful
-    return (this.lineParser as AsyncGenerator<EMARLineItem>).next();
-  }
-
-  public async getThruDate(): Promise<Date> {
-    if (!this.lineParser) {
-      await this.initialize();
-    }
-    // SAFETY: We called initialize if it was null, and only make it
-    // thus far if initialization was successful
-    return this.thruDate as Date;
-  }
-
-  public async getFromDate(): Promise<Date> {
-    if (!this.lineParser) {
-      await this.initialize();
-    }
-    // SAFETY: We called initialize if it was null, and only make it
-    // thus far if initialization was successful
-    return this.fromDate as Date;
-  }
-}
 
 function parseMTDate(date: string): Date {
   const month = parseInt(date.slice(0, 2), 10) - 1;
@@ -159,7 +89,7 @@ export class EMARLineItem {
   }
 }
 
-async function* mtLineParser(lineReader: AsyncGenerator<string>): AsyncGenerator<EMARLineItem> {
+export async function* mtLineParser(lines: string[]): AsyncGenerator<EMARLineItem> {
   let currentPtName: string | null = null;
   let currentPtId: string | null = null;
   let currentRx: string | null = null;
@@ -181,7 +111,7 @@ async function* mtLineParser(lineReader: AsyncGenerator<string>): AsyncGenerator
   let units;
   let currentDosePerUnits = undefined;
   let currentPRNReason = "";
-  for await (let line of lineReader) {
+  for (const line of lines) {
     let readyToSubmit = false;
     if (line.startsWith("Patient")) {
       currentPtName = getField(line, Field.PtName).trim().replace(",", ", ");
