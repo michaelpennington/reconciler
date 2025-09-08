@@ -1,28 +1,21 @@
 const fs = require('fs');
 const path = require('path');
 
-// When standard-version bumps the version in package.json, it sets an environment variable.
-// We read that new version. It will be a 3-part semver string like "1.2.3".
-const newVersion3Part = process.env.npm_package_version;
-
-if (!newVersion3Part) {
-  console.error('Error: Could not find the new version in the environment variable npm_package_version.');
-  console.error('This script should be run by npm in a "postbump" lifecycle script.');
-  process.exit(1);
-}
-
-// We will append ".0" to create the 4-part version string.
-// This ensures that "major", "minor", and "patch" releases from conventional
-// commits correctly increment the first three parts of the version.
-const newVersion4Part = `${newVersion3Part}.0`;
-
-console.log(`The new 3-part version is ${newVersion3Part}. Converting to 4-part version: ${newVersion4Part}.`);
-
-// --- Update package.json ---
+// --- Read package.json ---
 const packageJsonPath = path.resolve(__dirname, '..', 'package.json');
 const pkg = JSON.parse(fs.readFileSync(packageJsonPath, 'utf-8'));
 
-console.log(`Updating package.json version from ${pkg.version} to ${newVersion4Part}...`);
+// The version in the file is the new 3-part version from standard-version.
+// This is the correct way to get the version, not from an environment variable.
+const newVersion3Part = pkg.version;
+
+// We will append ".0" to create the 4-part version string.
+const newVersion4Part = `${newVersion3Part}.0`;
+
+console.log(`Read 3-part version ${newVersion3Part} from package.json. Converting to 4-part version: ${newVersion4Part}.`);
+
+// --- Update package.json ---
+console.log(`Updating package.json version to ${newVersion4Part}...`);
 pkg.version = newVersion4Part;
 fs.writeFileSync(packageJsonPath, JSON.stringify(pkg, null, 2) + '\n');
 console.log('Successfully updated package.json.');
