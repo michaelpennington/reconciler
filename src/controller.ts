@@ -1,8 +1,8 @@
 /* global console, Excel, Office */
 
-import { fromOCDate, toOADate } from "./taskpane/parser_utils";
-import { ignoredMeds } from "./taskpane/ignore";
-import { mtLineParser } from "./taskpane/parser";
+import { fromOCDate, toOADate } from "./utils/parser_utils";
+import { ignoredMeds } from "./utils/ignore";
+import { mtLineParser } from "./utils/parser";
 
 type UnifiedRecord = {
   ptID: string;
