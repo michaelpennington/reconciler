@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [1.0.8](https://github.com/OfficeDev/Office-Addin-TaskPane/compare/v1.0.7...v1.0.8) (2025-09-08)
+
+
+### Bug Fixes
+
+* Use absolute URL for import dialog ([3edea4a](https://github.com/OfficeDev/Office-Addin-TaskPane/commit/3edea4a86837ba20c702d82271341f57ea7748f5))
+
 ### [1.0.7](https://github.com/OfficeDev/Office-Addin-TaskPane/compare/v1.0.6...v1.0.7) (2025-09-08)
 
 
