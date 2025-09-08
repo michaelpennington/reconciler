@@ -3,7 +3,7 @@
  * See LICENSE in the project root for license information.
  */
 
-/* global Office, console */
+/* global Office, console, window, URL */
 import { analyzeData, formatTable, processImportData } from "../controller";
 
 Office.onReady(() => {
@@ -13,8 +13,9 @@ Office.onReady(() => {
 let dialog: Office.Dialog;
 
 function importData(event: Office.AddinCommands.Event) {
+  const url = new URL("/import-dialog.html", window.location.origin);
   Office.context.ui.displayDialogAsync(
-    "import-dialog.html",
+    url.href,
     { height: 25, width: 25, displayInIframe: true },
     (result: Office.AsyncResult<Office.Dialog>) => {
       if (result.status === Office.AsyncResultStatus.Failed) {
