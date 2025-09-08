@@ -1,9 +1,11 @@
-/* global console, document, Office, FileReader, HTMLInputElement */
+/* global console, document, Office, FileReader, HTMLInputElement, setTimeout */
 
 Office.onReady((info) => {
   if (info.host === Office.HostType.Excel) {
     const fileInput = document.getElementById("fileInput") as HTMLInputElement;
-    fileInput.click();
+    setTimeout(() => {
+      fileInput.click();
+    }, 0);
 
     fileInput.addEventListener("change", () => {
       const file = fileInput.files[0];
