@@ -308,7 +308,7 @@ export async function analyzeData() {
 export async function processImportData(fileContent: string) {
   try {
     const lines = fileContent.replace(/\r/g, "").split("\n");
-    const dataRows = [];
+    const dataRows: string | number | boolean | (string | number | boolean)[][] | undefined = [];
     for await (const line of mtLineParser(lines)) {
       dataRows.push([
         line.rxNum,
@@ -326,10 +326,10 @@ export async function processImportData(fileContent: string) {
         line.units,
         line.adminDoseAmt,
         line.adminUnits,
-        line.medStrength ?? "UNKNOWN",
-        line.medStrengthUnits ?? "UNKNOWN",
-        line.countPerDose ?? "UNKNOWN",
-        line.countGiven ?? "UNKNOWN",
+        line.medStrength ?? 1,
+        line.medStrengthUnits ?? "EACH",
+        line.countPerDose ?? 1,
+        line.countGiven ?? 0,
         line.schedule,
         line.orderType,
         line.location,
