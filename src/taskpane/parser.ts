@@ -1,3 +1,5 @@
+/*global console*/
+
 import { Field, getField } from "./parser_utils";
 
 function parseMTDate(date: string): Date {
@@ -61,7 +63,7 @@ export class EMARLineItem {
     schedule: string,
     orderType: string,
     location: string,
-    prnReason: string,
+    prnReason: string
   ) {
     this.rxNum = rxNum;
     this.ptName = ptName;
@@ -262,7 +264,7 @@ export async function* mtLineParser(lines: string[]): AsyncGenerator<EMARLineIte
           currentSchedule,
           currentOrderType,
           mapUnit(currentLocation),
-          currentPRNReason,
+          currentPRNReason
         );
       }
     }
@@ -290,7 +292,7 @@ class AdminDetails {
     rxScanned: boolean,
     ptScanned: boolean,
     adminDoseAmt: number,
-    adminUnits: string,
+    adminUnits: string
   ) {
     this.adminTime = adminTime;
     this.filedTime = filedTime;
@@ -422,6 +424,6 @@ function readAdminDetails(line: string): AdminDetails | null {
     rxScanned,
     ptScanned,
     adminDoseAmt,
-    adminUnits,
+    adminUnits
   );
 }

@@ -2,7 +2,7 @@
 
 import { fromOCDate, toOADate } from "./taskpane/parser_utils";
 import { ignoredMeds } from "./taskpane/ignore";
-import { mtLineParser, EMARLineItem } from "./taskpane/parser";
+import { mtLineParser } from "./taskpane/parser";
 
 type UnifiedRecord = {
   ptID: string;
@@ -237,7 +237,7 @@ export async function analyzeData() {
                 '& [@Schedule] & " " & [@OrderType] & " - " & [@Medication]',
             ],
           ],
-          true,
+          true
         );
       }
       if (Office.context.requirements.isSetSupported("ExcelApi", "1.2")) {
@@ -258,7 +258,7 @@ export async function analyzeData() {
       let avtPivotTable = auditData.pivotTables.add(
         "AVDAUDIT",
         avdTable,
-        auditData.getRange("A1:C18"),
+        auditData.getRange("A1:C18")
       );
       avtPivotTable.rowHierarchies.add(avtPivotTable.hierarchies.getItem("PtID+Rx+Medication"));
       avtPivotTable.rowHierarchies.getItem("PtID+Rx+Medication").position = 0;
@@ -429,7 +429,7 @@ export async function formatTable() {
       await context.sync();
       console.log(dateColumn);
       let dates = Array.from(
-        dateColumn.values.map((date) => [toOADate(fromOCDate(date[0] as string))]),
+        dateColumn.values.map((date) => [toOADate(fromOCDate(date[0] as string))])
       );
       console.log(dates);
       dateColumn.values = dates;

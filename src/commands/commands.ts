@@ -37,7 +37,7 @@ function importData(event: Office.AddinCommands.Event) {
 
           event.completed();
         });
-        dialog.addEventHandler(Office.EventType.DialogEventReceived, (arg: any) => {
+        dialog.addEventHandler(Office.EventType.DialogEventReceived, () => {
           event.completed();
         });
       }
