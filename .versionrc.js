@@ -3,6 +3,6 @@ module.exports = {
   // It will use this list to decide which files to add to the release commit.
   "bumpFiles": [
     { "filename": "package.json", "type": "json" },
-    { "filename": "manifest.xml", "type": "plain-text" }
+    { "filename": "manifest.xml", "updater": "manifest-updater.js" }
   ]
 }
