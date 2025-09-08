@@ -1,0 +1,64 @@
+name: Create and Deploy Release
+
+on:
+  # This allows the workflow to be triggered manually from the Actions tab in GitHub.
+  workflow_dispatch:
+    inputs:
+      # This input allows you to choose the type of release.
+      release_type:
+        description: 'The type of release (major, minor, or patch)'
+        required: true
+        default: 'patch'
+        type: choice
+        options:
+        - patch
+        - minor
+        - major
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+        with:
+          # We need to fetch all git history so standard-version can analyze commits.
+          fetch-depth: 0
+          # We use the default GITHUB_TOKEN, but the repository settings must
+          # allow workflows to create commits and tags.
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '18'
+
+      - name: Install Dependencies
+        run: npm install
+
+      - name: Configure Git User
+        run: |
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+
+      - name: Create Release Version
+        # This runs the standard-version tool.
+        # We pass the release type from the manual trigger as an argument.
+        # standard-version will bump the version, create a changelog, and tag the commit.
+        run: npx standard-version --release-as ${{ github.event.inputs.release_type }}
+
+      - name: Push Changes to Repository
+        # This pushes the new commit (with version bumps and changelog) and the new tag.
+        run: git push --follow-tags origin main
+
+      # The following steps are for building and deploying the new version.
+      - name: Build Project
+        run: npm run build
+
+      - name: Deploy to Azure Static Website
+        uses: Azure/static-website-deploy@v1
+        with:
+          connection_string: ${{ secrets.AZURE_STORAGE_CONNECTION_STRING }}
+          source: 'dist'
+          destination: '$web'
