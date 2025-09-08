@@ -14,7 +14,7 @@ let dialog: Office.Dialog;
 
 function importData(event: Office.AddinCommands.Event) {
   Office.context.ui.displayDialogAsync(
-    "https://localhost:3000/import-dialog.html",
+    "import-dialog.html",
     { height: 25, width: 25, displayInIframe: true },
     (result: Office.AsyncResult<Office.Dialog>) => {
       if (result.status === Office.AsyncResultStatus.Failed) {
