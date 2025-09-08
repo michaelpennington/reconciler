@@ -337,6 +337,9 @@ const UNITS: Array<string> = [
   "gm",
   "unit",
   "UNIT",
+  "MG/ML",
+  "mg/mL",
+  "mg/ml",
 ];
 
 function readStrength(medication: string): { amount: number; units: string } | undefined {
@@ -354,10 +357,23 @@ function readStrength(medication: string): { amount: number; units: string } | u
     if (!seenOpenParen) {
       for (const unit of UNITS) {
         if (word === unit) {
-          units = unit;
+          if (unit === "MG/ML") {
+            units = "MG";
+          } else if (unit === "mg/mL" || unit === "mg/ml") {
+            units = "mg";
+          } else {
+            units = unit;
+          }
           amount = parseFloat(lastWord.replace(",", ""));
           break;
         } else if (word.endsWith(unit)) {
+          if (unit === "MG/ML") {
+            units = "MG";
+          } else if (unit === "mg/mL" || unit === "mg/ml") {
+            units = "mg";
+          } else {
+            units = unit;
+          }
           units = unit;
           let unitStart = word.lastIndexOf(unit);
           amount = parseFloat(word.slice(0, unitStart).trim().replace(",", ""));
