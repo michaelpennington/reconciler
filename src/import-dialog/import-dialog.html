@@ -8,9 +8,22 @@
     <script type="text/javascript" src="https://appsforoffice.microsoft.com/lib/1/hosted/office.js"></script>
 </head>
 <body>
-    <div id="app-body">
-        <p>Please select the administration file to import.</p>
-        <input type="file" id="fileInput" />
-    </div>
+    <style>
+        body, html {
+            height: 100%;
+            margin: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        #browse-button {
+            font-size: 16px;
+            padding: 10px 20px;
+        }
+    </style>
+</head>
+<body>
+    <button id="browse-button">Browse...</button>
+    <input type="file" id="fileInput" style="display: none;" accept=".txt" />
 </body>
 </html>

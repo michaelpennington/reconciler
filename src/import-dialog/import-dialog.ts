@@ -3,7 +3,11 @@
 Office.onReady((info) => {
   if (info.host === Office.HostType.Excel) {
     const fileInput = document.getElementById("fileInput") as HTMLInputElement;
-    fileInput.click();
+    const browseButton = document.getElementById("browse-button");
+
+    browseButton.addEventListener("click", () => {
+      fileInput.click();
+    });
 
     fileInput.addEventListener("change", () => {
       const file = fileInput.files[0];
