@@ -104,7 +104,6 @@ export async function* mtLineParser(lines: string[]): AsyncGenerator<EMARLineIte
   let currentMedication: string = "";
   let justSawPt = false;
   let readingMedication = false;
-  let readingAdmins = false;
   let adminStack: Array<AdminDetails> = [];
   let currentDoseAmt = 0.0;
   let currentDoseUnits = "";
@@ -136,10 +135,8 @@ export async function* mtLineParser(lines: string[]): AsyncGenerator<EMARLineIte
         currentRx = getField(line, Field.RxNum);
         currentMedication = getField(line, Field.Medication).trim();
         readingMedication = true;
-        readingAdmins = true;
       }
     } else if (line.startsWith("       Dose")) {
-      readingAdmins = false;
       let doseStr = getField(line, Field.Dose).trim();
       currentSchedule = getField(line, Field.Schedule).trim();
       currentOrderType = getField(line, Field.Prn).trim();
@@ -222,12 +219,10 @@ export async function* mtLineParser(lines: string[]): AsyncGenerator<EMARLineIte
       lookingForPRNReason = false;
       readyToSubmit = true;
     }
-    if (readingAdmins) {
       let admin = readAdminDetails(line);
       if (admin !== null) {
         adminStack.push(admin);
       }
-    }
     if (readyToSubmit) {
       while (adminStack.length > 0) {
         let admin = adminStack.shift() as AdminDetails;
