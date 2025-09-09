@@ -24,8 +24,11 @@ module.exports = async (env, options) => {
     output: {
       clean: true,
     },
+    experiments: {
+      asyncWebAssembly: true,
+    },
     resolve: {
-      extensions: [".ts", ".html", ".js"],
+      extensions: [".ts", ".html", ".js", ".wasm"],
     },
     module: {
       rules: [
@@ -55,6 +58,10 @@ module.exports = async (env, options) => {
         patterns: [
           {
             from: "assets/*",
+            to: "assets/[name][ext][query]",
+          },
+          {
+            from: "wasm-lib/pkg/*",
             to: "assets/[name][ext][query]",
           },
           {

@@ -2,6 +2,9 @@
 
 /* global Excel, Office, console, window, URL */
 import { analyzeData, formatTable, processImportData, handleSheetAdded } from "../controller";
+import("wasm-lib").then((wasm) => {
+  console.log("2 + 2 = ", wasm.add(2, 2));
+});
 
 Office.onReady(async () => {
   // If needed, Office.js is ready to be called.
