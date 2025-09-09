@@ -219,10 +219,10 @@ export async function* mtLineParser(lines: string[]): AsyncGenerator<EMARLineIte
       lookingForPRNReason = false;
       readyToSubmit = true;
     }
-      let admin = readAdminDetails(line);
-      if (admin !== null) {
-        adminStack.push(admin);
-      }
+    let admin = readAdminDetails(line);
+    if (admin !== null) {
+      adminStack.push(admin);
+    }
     if (readyToSubmit) {
       while (adminStack.length > 0) {
         let admin = adminStack.shift() as AdminDetails;
@@ -326,6 +326,9 @@ const UNITS: Array<string> = [
   "mg",
   "MCG",
   "mcg",
+  "MG/ML",
+  "mg/mL",
+  "mg/ml",
   "G",
   "g",
   "GR",
@@ -341,9 +344,6 @@ const UNITS: Array<string> = [
   "gm",
   "unit",
   "UNIT",
-  "MG/ML",
-  "mg/mL",
-  "mg/ml",
 ];
 
 function readStrength(medication: string): { amount: number; units: string } | undefined {
@@ -378,7 +378,6 @@ function readStrength(medication: string): { amount: number; units: string } | u
           } else {
             units = unit;
           }
-          units = unit;
           let unitStart = word.lastIndexOf(unit);
           amount = parseFloat(word.slice(0, unitStart).trim().replace(",", ""));
           break;
