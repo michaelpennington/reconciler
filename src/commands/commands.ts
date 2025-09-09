@@ -5,6 +5,9 @@
 
 /* global Office, console, window, URL */
 import { analyzeData, formatTable, processImportData } from "../controller";
+import("wasm-lib").then((wasm) => {
+  console.log("2 + 2 = ", wasm.add(2, 2));
+});
 
 Office.onReady(() => {
   // If needed, Office.js is ready to be called.

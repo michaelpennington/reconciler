@@ -24,13 +24,16 @@
     "stop": "office-addin-debugging stop manifest.xml",
     "validate": "office-addin-manifest validate manifest.xml",
     "watch": "webpack --mode development --watch",
-    "release": "standard-version"
+    "release": "standard-version",
+    "build:wasm": "wasm-pack build ./wasm-lib --target web"
   },
   "dependencies": {
     "core-js": "^3.36.0",
-    "regenerator-runtime": "^0.14.1"
+    "regenerator-runtime": "^0.14.1",
+    "wasm-lib": "file:./wasm-lib/pkg"
   },
   "devDependencies": {
+    "wasm-pack": "^0.13.0",
     "@babel/core": "^7.24.0",
     "@babel/preset-env": "^7.25.4",
     "@babel/preset-typescript": "^7.23.3",
