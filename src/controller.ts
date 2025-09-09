@@ -1,3 +1,5 @@
+/* Copyright © 2025 Michael Pennington - All Rights Reserved */
+
 /* global console, Excel, Office */
 
 import { fromOCDate, toOADate } from "./utils/parser_utils";

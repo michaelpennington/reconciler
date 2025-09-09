@@ -1,3 +1,5 @@
+/* Copyright © 2025 Michael Pennington - All Rights Reserved */
+
 /*global console*/
 
 import { Field, getField } from "./parser_utils";

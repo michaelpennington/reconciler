@@ -1,7 +1,4 @@
-/*
- * Copyright (c) Microsoft Corporation. All rights reserved. Licensed under the MIT license.
- * See LICENSE in the project root for license information.
- */
+/* Copyright © 2025 Michael Pennington - All Rights Reserved */
 
 /* global Office, console, window, URL */
 import { analyzeData, formatTable, processImportData } from "../controller";

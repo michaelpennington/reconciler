@@ -1,3 +1,5 @@
+/* Copyright © 2025 Michael Pennington - All Rights Reserved */
+
 export const enum Field {
   RxNum,
   PtName,
