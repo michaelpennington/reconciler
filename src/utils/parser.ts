@@ -316,6 +316,50 @@ export async function* mtLineParser(lines: string[]): AsyncGenerator<EMARLineIte
     }
     lineNo++;
   }
+  while (adminStack.length > 0) {
+    let admin = adminStack.shift() as AdminDetails;
+    let countGiven = undefined;
+    if (
+      currentMedStrength &&
+      currentMedStrengthUnits &&
+      currentMedStrengthUnits === admin.adminUnits &&
+      admin.given
+    ) {
+      countGiven = admin.adminDoseAmt / currentMedStrength;
+    } else if (!admin.given) {
+      countGiven = 0;
+    }
+    if (!currentRx || !currentPtName || !currentPtId || (!doseAmt && doseAmt != 0) || !units) {
+      console.log(currentRx, currentPtName, currentPtId, doseAmt, units);
+      throw new Error(`Found Dose line before finding an Rx or Pt! on line ${lineNo}`);
+    }
+    yield new EMARLineItem(
+      currentRx,
+      currentPtName,
+      currentPtId,
+      currentMedication,
+      admin.adminTime,
+      admin.filedTime,
+      admin.schedTime,
+      admin.user,
+      admin.given,
+      admin.rxScanned,
+      admin.ptScanned,
+      doseAmt,
+      units,
+      admin.adminDoseAmt,
+      admin.adminUnits,
+      currentMedStrength,
+      currentMedStrengthUnits,
+      currentDosePerUnits,
+      countGiven,
+      currentSchedule,
+      currentOrderType,
+      mapUnit(currentLocation),
+      currentPRNReason,
+      admin.refReason
+    );
+  }
 }
 
 class AdminDetails {
