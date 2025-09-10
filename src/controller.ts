@@ -21,6 +21,15 @@ type UnifiedRecord = {
   schedule: string;
   location: string;
   prnReason: string;
+  filedTime: number | string;
+  schedTime: number | string;
+  doseAmount: number | string;
+  units: string;
+  adminDoseAmount: number | string;
+  adminUnits: string;
+  refReason: string;
+  rxScanned: boolean | string;
+  ptScanned: boolean | string;
 };
 
 const enum AdminsColumns {
@@ -93,7 +102,7 @@ export async function analyzeData() {
       const sheets = context.workbook.worksheets;
       const sheet = sheets.add("AdminVDisp");
       sheet.name = "AdminVDisp";
-      let avdTable = sheet.tables.add("A1:P1", true);
+      let avdTable = sheet.tables.add("A1:Y1", true);
       avdTable.name = "AdminsVDispenses";
 
       avdTable.load("headerRowRange");
@@ -116,6 +125,15 @@ export async function analyzeData() {
           "Location",
           "Schedule",
           "PRNReason",
+          "FiledTime",
+          "SchedTime",
+          "DoseAmount",
+          "Units",
+          "AdminDoseAmount",
+          "AdminUnits",
+          "RefReason",
+          "RxScanned",
+          "PtScanned",
           "PtID+Rx+Medication",
         ],
       ];
@@ -136,30 +154,37 @@ export async function analyzeData() {
 
       for (const admin of adminsData) {
         let mnemonic = "";
-        if (admin[AdminsColumns.Given]) {
-          for (const disp of disposData) {
-            if (disp[DisposColumns.RxNumber] === admin[AdminsColumns.RxNumber]) {
-              mnemonic = disp[DisposColumns.Mnemonic];
-              break;
-            }
+        for (const disp of disposData) {
+          if (disp[DisposColumns.RxNumber] === admin[AdminsColumns.RxNumber]) {
+            mnemonic = disp[DisposColumns.Mnemonic];
+            break;
           }
-          newRecords.push({
-            ptID: admin[AdminsColumns.PtID],
-            rxNumber: admin[AdminsColumns.RxNumber],
-            medication: admin[AdminsColumns.Medication],
-            mnemonic,
-            time: admin[AdminsColumns.AdminTime],
-            dispensed: 0,
-            given: admin[AdminsColumns.NumberGiven],
-            returned: 0,
-            wasted: 0,
-            userID: admin[AdminsColumns.User],
-            orderType: admin[AdminsColumns.OrderType],
-            schedule: admin[AdminsColumns.Schedule],
-            location: admin[AdminsColumns.Unit],
-            prnReason: admin[AdminsColumns.PRNReason],
-          });
         }
+        newRecords.push({
+          ptID: admin[AdminsColumns.PtID],
+          rxNumber: admin[AdminsColumns.RxNumber],
+          medication: admin[AdminsColumns.Medication],
+          mnemonic,
+          time: admin[AdminsColumns.AdminTime],
+          dispensed: 0,
+          given: admin[AdminsColumns.Given] ? admin[AdminsColumns.NumberGiven] : 0,
+          returned: 0,
+          wasted: 0,
+          userID: admin[AdminsColumns.User],
+          orderType: admin[AdminsColumns.OrderType],
+          schedule: admin[AdminsColumns.Schedule],
+          location: admin[AdminsColumns.Unit],
+          prnReason: admin[AdminsColumns.PRNReason],
+          filedTime: admin[AdminsColumns.FiledTime],
+          schedTime: admin[AdminsColumns.SchedTime],
+          doseAmount: admin[AdminsColumns.DoseAmount],
+          units: admin[AdminsColumns.Units],
+          adminDoseAmount: admin[AdminsColumns.AdminDoseAmt],
+          adminUnits: admin[AdminsColumns.AdminUnits],
+          refReason: admin[AdminsColumns.RefReason],
+          rxScanned: admin[AdminsColumns.RxScanned],
+          ptScanned: admin[AdminsColumns.PtScanned],
+        });
       }
 
       for (const dispo of disposData) {
@@ -206,6 +231,15 @@ export async function analyzeData() {
           location: dispo[DisposColumns.Omnicell],
           schedule,
           prnReason,
+          filedTime: "",
+          schedTime: "",
+          doseAmount: "",
+          units: "",
+          adminDoseAmount: "",
+          adminUnits: "",
+          refReason: "",
+          rxScanned: "",
+          ptScanned: "",
         });
       }
       outer: for (const record of newRecords) {
@@ -236,6 +270,15 @@ export async function analyzeData() {
               record.location,
               record.schedule,
               record.prnReason,
+              record.filedTime,
+              record.schedTime,
+              record.doseAmount,
+              record.units,
+              record.adminDoseAmount,
+              record.adminUnits,
+              record.refReason,
+              record.rxScanned,
+              record.ptScanned,
               '=[@PtID] & " - " & [@RxNumber] & " - " ' +
                 '& [@Schedule] & " " & [@OrderType] & " - " & [@Medication]',
             ],
@@ -253,6 +296,12 @@ export async function analyzeData() {
         { key: 4, ascending: true },
       ]);
       avdTable.columns.getItem("Time").getDataBodyRange().numberFormat = [
+        ["[$-409]m/d/yy h:mm AM/PM;@"],
+      ];
+      avdTable.columns.getItem("FiledTime").getDataBodyRange().numberFormat = [
+        ["[$-409]m/d/yy h:mm AM/PM;@"],
+      ];
+      avdTable.columns.getItem("SchedTime").getDataBodyRange().numberFormat = [
         ["[$-409]m/d/yy h:mm AM/PM;@"],
       ];
       await context.sync();
@@ -281,7 +330,7 @@ export async function analyzeData() {
       avtPivotTable.dataHierarchies.items[1].name = "NumGiven";
       avtPivotTable.dataHierarchies.items[2].name = "NumReturned";
       avtPivotTable.dataHierarchies.items[3].name = "NumWasted";
-      avtPivotTable.dataHierarchies.items[4].name = "Sum";
+      avtPivotTable.dataHierarchies.items[4].name = "Variance";
 
       const conditionalFormat = auditData
         .getRange("F2:F3000")
