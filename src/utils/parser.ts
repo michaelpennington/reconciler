@@ -118,112 +118,7 @@ export async function* mtLineParser(lines: string[]): AsyncGenerator<EMARLineIte
   let currentDosePerUnits = undefined;
   let currentPRNReason = "";
   for (const line of lines) {
-    let readyToSubmit = false;
     if (line.startsWith("Patient")) {
-      currentPtName = getField(line, Field.PtName).trim().replace(",", ", ");
-      justSawPt = true;
-    } else if (justSawPt) {
-      currentPtId = getField(line, Field.PtId).trim();
-      currentLocation = getField(line, Field.Location).trim();
-      justSawPt = false;
-    } else if (line.startsWith("Z") || line.startsWith("U")) {
-      const number = /[0-9]/;
-      if (number.test(line.charAt(1))) {
-        if (!currentPtName || !currentPtId) {
-          throw new Error(`Rx ${getField(line, Field.RxNum)} found outside context of patient!`);
-        }
-        currentRx = getField(line, Field.RxNum);
-        currentMedication = getField(line, Field.Medication).trim();
-        readingMedication = true;
-      }
-    } else if (line.startsWith("       Dose")) {
-      let doseStr = getField(line, Field.Dose).trim();
-      currentSchedule = getField(line, Field.Schedule).trim();
-      currentOrderType = getField(line, Field.Prn).trim();
-      doseAmt = undefined;
-      units = undefined;
-      if (doseStr.startsWith("See Taper")) {
-        doseAmt = currentDoseAmt;
-        units = currentDoseUnits;
-      } else {
-        let doseStrs = doseStr.split(" ");
-        doseAmt = parseFloat(doseStrs[0].replace(",", ""));
-        units = doseStrs[1] ?? "NF";
-      }
-      if (!currentRx || !currentPtName || !currentPtId || (!doseAmt && doseAmt != 0) || !units) {
-        console.log(currentRx, currentPtName, currentPtId, doseAmt, units);
-        throw new Error(`Found Dose line before finding an Rx or Pt! on line ${lineNo}`);
-      }
-      if (
-        (doseAmt !== currentDoseAmt || units !== currentDoseUnits) &&
-        doseAmt !== 0 &&
-        units !== "NF"
-      ) {
-        console.log(currentRx, currentPtName, currentPtId, doseAmt, units);
-        throw new Error(`Dose amount is not equal! on line ${lineNo}`);
-      }
-      currentDosePerUnits = undefined;
-      if (
-        currentMedStrength &&
-        currentMedStrengthUnits &&
-        currentMedStrengthUnits === currentDoseUnits
-      ) {
-        currentDosePerUnits = currentDoseAmt / currentMedStrength;
-      }
-      if (adminStack.length > 0 && adminStack[0].schedTime === undefined) {
-        console.log(adminStack.slice());
-        lookingForPRNReason = true;
-      } else {
-        readyToSubmit = true;
-        currentPRNReason = "";
-      }
-    } else if (readingMedication) {
-      let newMedString = getField(line, Field.Medication);
-      if (newMedString.startsWith("  ")) {
-        readingMedication = false;
-        let lastParen = currentMedication.lastIndexOf("(");
-        if (lastParen === -1) {
-          console.log(currentMedication);
-          throw Error(`Found medication string without ending dose! On line ${lineNo}`);
-        }
-        let dose = currentMedication.slice(lastParen);
-        currentMedication = currentMedication.slice(0, lastParen - 1);
-        if (!dose.startsWith("(") || !dose.endsWith(")")) {
-          throw Error(`Malformed dose ${dose} at and of medication]`);
-        }
-        let doseStrs = dose.slice(1, -1).trim().split(" ");
-        currentDoseAmt = parseFloat(doseStrs[0].replace(",", ""));
-        currentDoseUnits = doseStrs[1];
-        let strength = readStrength(currentMedication);
-        if (
-          currentDoseUnits === "EACH" ||
-          currentDoseUnits === "ea" ||
-          currentDoseUnits === "EA" ||
-          currentDoseUnits === "each"
-        ) {
-          currentMedStrength = 1;
-          currentMedStrengthUnits = currentDoseUnits;
-        } else if (strength) {
-          ({ amount: currentMedStrength, units: currentMedStrengthUnits } = strength);
-        } else {
-          currentMedStrength = undefined;
-          currentMedStrengthUnits = undefined;
-        }
-      } else {
-        currentMedication += " " + newMedString.trim();
-      }
-    } else if (lookingForPRNReason) {
-      if (line.startsWith(" PRN Reason")) {
-        currentPRNReason = getField(line, Field.PrnReason).trim();
-      }
-      lookingForPRNReason = false;
-      readyToSubmit = true;
-    }
-    let admin = readAdminDetails(line);
-    if (admin !== null) {
-      adminStack.push(admin);
-    }
-    if (readyToSubmit) {
       while (adminStack.length > 0) {
         let admin = adminStack.shift() as AdminDetails;
         let countGiven = undefined;
@@ -268,6 +163,156 @@ export async function* mtLineParser(lines: string[]): AsyncGenerator<EMARLineIte
           admin.refReason
         );
       }
+      currentPtName = getField(line, Field.PtName).trim().replace(",", ", ");
+      justSawPt = true;
+    } else if (justSawPt) {
+      currentPtId = getField(line, Field.PtId).trim();
+      currentLocation = getField(line, Field.Location).trim();
+      justSawPt = false;
+    } else if (line.startsWith("Z") || line.startsWith("U")) {
+      const number = /[0-9]/;
+      if (number.test(line.charAt(1))) {
+        if (!currentPtName || !currentPtId) {
+          throw new Error(`Rx ${getField(line, Field.RxNum)} found outside context of patient!`);
+        }
+        while (adminStack.length > 0) {
+          let admin = adminStack.shift() as AdminDetails;
+          let countGiven = undefined;
+          if (
+            currentMedStrength &&
+            currentMedStrengthUnits &&
+            currentMedStrengthUnits === admin.adminUnits &&
+            admin.given
+          ) {
+            countGiven = admin.adminDoseAmt / currentMedStrength;
+          } else if (!admin.given) {
+            countGiven = 0;
+          }
+          if (
+            !currentRx ||
+            !currentPtName ||
+            !currentPtId ||
+            (!doseAmt && doseAmt != 0) ||
+            !units
+          ) {
+            console.log(currentRx, currentPtName, currentPtId, doseAmt, units);
+            throw new Error(`Found Dose line before finding an Rx or Pt! on line ${lineNo}`);
+          }
+          yield new EMARLineItem(
+            currentRx,
+            currentPtName,
+            currentPtId,
+            currentMedication,
+            admin.adminTime,
+            admin.filedTime,
+            admin.schedTime,
+            admin.user,
+            admin.given,
+            admin.rxScanned,
+            admin.ptScanned,
+            doseAmt,
+            units,
+            admin.adminDoseAmt,
+            admin.adminUnits,
+            currentMedStrength,
+            currentMedStrengthUnits,
+            currentDosePerUnits,
+            countGiven,
+            currentSchedule,
+            currentOrderType,
+            mapUnit(currentLocation),
+            currentPRNReason,
+            admin.refReason
+          );
+        }
+        currentRx = getField(line, Field.RxNum);
+        currentMedication = getField(line, Field.Medication).trim();
+        readingMedication = true;
+      }
+    } else if (line.startsWith("       Dose")) {
+      let doseStr = getField(line, Field.Dose).trim();
+      currentSchedule = getField(line, Field.Schedule).trim();
+      currentOrderType = getField(line, Field.Prn).trim();
+      doseAmt = undefined;
+      units = undefined;
+      if (doseStr.startsWith("See Taper")) {
+        doseAmt = currentDoseAmt;
+        units = currentDoseUnits;
+      } else {
+        let doseStrs = doseStr.split(" ");
+        doseAmt = parseFloat(doseStrs[0].replace(",", ""));
+        units = doseStrs[1] ?? "NF";
+      }
+      if (!currentRx || !currentPtName || !currentPtId || (!doseAmt && doseAmt != 0) || !units) {
+        console.log(currentRx, currentPtName, currentPtId, doseAmt, units);
+        throw new Error(`Found Dose line before finding an Rx or Pt! on line ${lineNo}`);
+      }
+      if (
+        (doseAmt !== currentDoseAmt || units !== currentDoseUnits) &&
+        doseAmt !== 0 &&
+        units !== "NF"
+      ) {
+        console.log(currentRx, currentPtName, currentPtId, doseAmt, units);
+        throw new Error(`Dose amount is not equal! on line ${lineNo}`);
+      }
+      currentDosePerUnits = undefined;
+      if (
+        currentMedStrength &&
+        currentMedStrengthUnits &&
+        currentMedStrengthUnits === currentDoseUnits
+      ) {
+        currentDosePerUnits = currentDoseAmt / currentMedStrength;
+      }
+      if (adminStack.length > 0 && adminStack[0].schedTime === undefined) {
+        console.log(adminStack.slice());
+        lookingForPRNReason = true;
+      } else {
+        currentPRNReason = "";
+      }
+    } else if (readingMedication) {
+      let newMedString = getField(line, Field.Medication);
+      if (newMedString.startsWith("  ")) {
+        readingMedication = false;
+        let lastParen = currentMedication.lastIndexOf("(");
+        if (lastParen === -1) {
+          console.log(currentMedication);
+          throw Error(`Found medication string without ending dose! On line ${lineNo}`);
+        }
+        let dose = currentMedication.slice(lastParen);
+        currentMedication = currentMedication.slice(0, lastParen - 1);
+        if (!dose.startsWith("(") || !dose.endsWith(")")) {
+          throw Error(`Malformed dose ${dose} at and of medication]`);
+        }
+        let doseStrs = dose.slice(1, -1).trim().split(" ");
+        currentDoseAmt = parseFloat(doseStrs[0].replace(",", ""));
+        currentDoseUnits = doseStrs[1];
+        let strength = readStrength(currentMedication);
+        if (
+          currentDoseUnits === "EACH" ||
+          currentDoseUnits === "ea" ||
+          currentDoseUnits === "EA" ||
+          currentDoseUnits === "each"
+        ) {
+          currentMedStrength = 1;
+          currentMedStrengthUnits = currentDoseUnits;
+        } else if (strength) {
+          ({ amount: currentMedStrength, units: currentMedStrengthUnits } = strength);
+        } else {
+          currentMedStrength = undefined;
+          currentMedStrengthUnits = undefined;
+        }
+      } else {
+        currentMedication += " " + newMedString.trim();
+      }
+    } else if (lookingForPRNReason) {
+      if (line.startsWith(" PRN Reason")) {
+        currentPRNReason = getField(line, Field.PrnReason).trim();
+      }
+      lookingForPRNReason = false;
+    }
+    let admin = readAdminDetails(line);
+    if (admin !== null) {
+      adminStack.push(admin);
     }
     lineNo++;
   }
