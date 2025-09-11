@@ -8,6 +8,9 @@ Office.onReady(async () => {
   await Excel.run(async (context) => {
     const worksheets = context.workbook.worksheets;
     worksheets.onAdded.add(handleSheetAdded);
+    context.runtime.load("enableEvents");
+    await context.sync();
+    context.runtime.enableEvents = true;
     await context.sync();
   });
 });

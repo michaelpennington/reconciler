@@ -363,7 +363,8 @@ export async function handleSheetAdded(event: Excel.WorksheetAddedEventArgs) {
     sheet.load("name");
     await context.sync();
 
-    if (sheet.name.startsWith("Details")) {
+    console.log(`Sheet called ${sheet.name} created`);
+    if (sheet.name.startsWith("Detail")) {
       const table = sheet.tables.getItemAt(0);
       const dateColumn = table.columns.getItem("Date");
       dateColumn.load("index");
