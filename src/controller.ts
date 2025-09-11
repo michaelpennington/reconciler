@@ -349,6 +349,8 @@ export async function analyzeData() {
       auditData.freezePanes.freezeAt(auditData.getRange("1:1"));
 
       auditData.activate();
+      const worksheets = context.workbook.worksheets;
+      worksheets.onAdded.add(handleSheetAdded);
 
       await context.sync();
     });
@@ -363,10 +365,9 @@ export async function handleSheetAdded(event: Excel.WorksheetAddedEventArgs) {
     sheet.load("name");
     await context.sync();
 
-    console.log(`Sheet called ${sheet.name} created`);
     if (sheet.name.startsWith("Detail")) {
       const table = sheet.tables.getItemAt(0);
-      const dateColumn = table.columns.getItem("Date");
+      const dateColumn = table.columns.getItem("Time");
       dateColumn.load("index");
       await context.sync();
 

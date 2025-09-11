@@ -5,14 +5,6 @@ import { analyzeData, formatTable, processImportData, handleSheetAdded } from ".
 
 Office.onReady(async () => {
   // If needed, Office.js is ready to be called.
-  await Excel.run(async (context) => {
-    const worksheets = context.workbook.worksheets;
-    worksheets.onAdded.add(handleSheetAdded);
-    context.runtime.load("enableEvents");
-    await context.sync();
-    context.runtime.enableEvents = true;
-    await context.sync();
-  });
 });
 
 let dialog: Office.Dialog;
