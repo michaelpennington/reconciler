@@ -1,10 +1,15 @@
 /* Copyright © 2025 Michael Pennington - All Rights Reserved */
 
-/* global Office, console, window, URL */
-import { analyzeData, formatTable, processImportData } from "../controller";
+/* global Excel, Office, console, window, URL */
+import { analyzeData, formatTable, processImportData, handleSheetAdded } from "../controller";
 
-Office.onReady(() => {
+Office.onReady(async () => {
   // If needed, Office.js is ready to be called.
+  await Excel.run(async (context) => {
+    const worksheets = context.workbook.worksheets;
+    worksheets.onAdded.add(handleSheetAdded);
+    await context.sync();
+  });
 });
 
 let dialog: Office.Dialog;

@@ -357,6 +357,32 @@ export async function analyzeData() {
   }
 }
 
+export async function handleSheetAdded(event: Excel.WorksheetAddedEventArgs) {
+  await Excel.run(async (context) => {
+    const sheet = context.workbook.worksheets.getItem(event.worksheetId);
+    sheet.load("name");
+    await context.sync();
+
+    if (sheet.name.startsWith("Details")) {
+      const table = sheet.tables.getItemAt(0);
+      const dateColumn = table.columns.getItem("Date");
+      dateColumn.load("index");
+      await context.sync();
+
+      table.sort.apply(
+        [
+          {
+            key: dateColumn.index,
+            ascending: true,
+          },
+        ],
+        true
+      );
+      await context.sync();
+    }
+  });
+}
+
 export async function processImportData(fileContent: string) {
   try {
     const lines = fileContent.replace(/\r/g, "").split("\n");
