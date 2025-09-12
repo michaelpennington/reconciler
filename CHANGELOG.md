@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [1.3.0](https://github.com/OfficeDev/Office-Addin-TaskPane/compare/v1.2.2...v1.3.0) (2025-09-12)
+
+
+### Features
+
+* Add auto-sorting for 'Details' sheets ([88333e1](https://github.com/OfficeDev/Office-Addin-TaskPane/commit/88333e17d88fb7421a92c2c3e68b0c818c7f7bc9))
+
 ### [1.2.2](https://github.com/OfficeDev/Office-Addin-TaskPane/compare/v1.2.1...v1.2.2) (2025-09-10)
 
 ### [1.2.1](https://github.com/OfficeDev/Office-Addin-TaskPane/compare/v1.2.0...v1.2.1) (2025-09-10)
