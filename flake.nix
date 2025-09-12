@@ -27,6 +27,12 @@
       pkgs = import nixpkgs {
         inherit system overlays;
       };
+      rust =
+        pkgs.rust-bin.stable.latest.default.override
+        {
+          extensions = ["rust-src"];
+          targets = ["wasm32-unknown-unknown"];
+        };
     in {
       # The 'nix develop' command will drop you into this shell
       devShells.default = with pkgs;
@@ -36,11 +42,7 @@
             nodejs # A specific, recent version of Node.js
             yarn # Often useful for JS projects
             yo # The Yeoman scaffolding tool itself
-            rust-bin.stable.latest.default.override
-            {
-              extensions = ["rust-src"];
-              targets = ["wasm32-unknown-unknown"];
-            }
+            rust
           ];
 
           # This is a script that runs when you enter the shell.
