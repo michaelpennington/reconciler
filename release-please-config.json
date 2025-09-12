@@ -8,7 +8,7 @@
         {
           "type": "xml",
           "path": "manifest.xml",
-          "xpath": "//OfficeApp/Version"
+          "xpath": "/*[local-name()='OfficeApp']/*[local-name()='Version']"
         }
       ]
     }
