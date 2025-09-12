@@ -2,6 +2,19 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [1.4.0](https://github.com/michaelpennington/reconciler/compare/v1.3.0...v1.4.0) (2025-09-12)
+
+
+### Features
+
+* Switch from standard-version to release-please ([06e713e](https://github.com/michaelpennington/reconciler/commit/06e713e1454f51e2b1c625fc9031957e4f3c44e4))
+
+
+### Bug Fixes
+
+* Add permissions to release-please workflow ([5a06750](https://github.com/michaelpennington/reconciler/commit/5a0675079afebef03b769e8e87e5d0b39536a747))
+* use correct github url ([0cefd25](https://github.com/michaelpennington/reconciler/commit/0cefd2518d72978373d1dcb6de75ec4d3aa6540a))
+
 ## [1.3.0](https://github.com/michaelpennington/reconciler/compare/v1.2.2...v1.3.0) (2025-09-12)
 
 
