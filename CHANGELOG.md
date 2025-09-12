@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [1.4.2](https://github.com/michaelpennington/reconciler/compare/v1.4.1...v1.4.2) (2025-09-12)
+
+
+### Bug Fixes
+
+* update manifest.xml version correctly ([7cfeed9](https://github.com/michaelpennington/reconciler/commit/7cfeed9e66665cc0b9b4c7d6b75340445029c089))
+
 ## [1.4.1](https://github.com/michaelpennington/reconciler/compare/v1.4.0...v1.4.1) (2025-09-12)
 
 
