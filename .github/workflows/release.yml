@@ -1,80 +1,17 @@
-name: Create and Deploy Release
+name: Release Please
 
 on:
-  # This allows the workflow to be triggered manually from the Actions tab in GitHub.
-  workflow_dispatch:
-    inputs:
-      # This input allows you to choose the type of release.
-      release_type:
-        description: 'The type of release (major, minor, or patch)'
-        required: true
-        default: 'patch'
-        type: choice
-        options:
-        - patch
-        - minor
-        - major
+  push:
+    branches:
+      - master
 
 jobs:
-  release:
+  release-please:
     runs-on: ubuntu-latest
-    permissions:
-      contents: write
-
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v3
+      - uses: google-github-actions/release-please-action@v3
         with:
-          # We need to fetch all git history so standard-version can analyze commits.
-          fetch-depth: 0
-          # We use the default GITHUB_TOKEN, but the repository settings must
-          # allow workflows to create commits and tags.
-          token: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v3
-        with:
-          node-version: '24'
-
-      - name: Install Dependencies
-        run: npm install
-
-      - name: Configure Git User
-        run: |
-          git config --global user.name "github-actions[bot]"
-          git config --global user.email "github-actions[bot]@users.noreply.github.com"
-
-      - name: Create Release Version
-        # This runs the standard-version tool.
-        # We pass the release type from the manual trigger as an argument.
-        # standard-version will bump the version, create a changelog, and tag the commit.
-        run: npx standard-version --release-as ${{ github.event.inputs.release_type }}
-
-      - name: Push Changes to Repository
-        # This pushes the new commit (with version bumps and changelog) and the new tag.
-        run: git push --follow-tags origin master
-
-      # The following steps are for building and deploying the new version.
-      - name: Build Project
-        run: npm run build
-
-      - name: Login to Azure
-        uses: azure/login@v1
-        with:
-          creds: ${{ secrets.AZURE_CREDENTIALS }}
-
-      - name: Deploy to Azure Storage
-        uses: azure/CLI@v1
-        with:
-          inlineScript: |
-            set -e # Exit on error
-            echo "Extracting storage account name from connection string..."
-            ACCOUNT_NAME=$(echo "$CONNECTION_STRING" | sed -n 's/.*AccountName=\([^;]*\).*/\1/p')
-            if [ -z "$ACCOUNT_NAME" ]; then
-              echo "Error: Could not extract AccountName from connection string."
-              exit 1
-            fi
-            echo "Deploying to storage account: $ACCOUNT_NAME"
-            az storage blob upload-batch --account-name $ACCOUNT_NAME --auth-mode login -d '$web' -s 'dist' --overwrite
-        env:
-          CONNECTION_STRING: ${{ secrets.AZURE_STORAGE_CONNECTION_STRING }}
+          release-type: node
+          package-name: reconciler
+          config-file: release-please-config.json
+          manifest-file: .release-please-manifest.json
