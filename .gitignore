@@ -143,3 +143,6 @@ vite.config.ts.timestamp-*
 wasm-lib/pkg/
 wasm-lib/target/
 
+# NPM packages
+.npm-packages
+

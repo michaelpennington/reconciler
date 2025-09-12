@@ -6,8 +6,9 @@
       "package-name": "reconciler",
       "extra-files": [
         {
-          "type": "generic",
-          "path": "manifest.xml"
+          "type": "xml",
+          "path": "manifest.xml",
+          "xpath": "//OfficeApp/Version"
         }
       ]
     }
