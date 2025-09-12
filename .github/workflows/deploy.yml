@@ -1,0 +1,44 @@
+name: Deploy
+
+on:
+  release:
+    types: [created]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '24'
+
+      - name: Install Dependencies
+        run: npm install
+
+      - name: Build Project
+        run: npm run build
+
+      - name: Login to Azure
+        uses: azure/login@v1
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+
+      - name: Deploy to Azure Storage
+        uses: azure/CLI@v1
+        with:
+          inlineScript: |
+            set -e # Exit on error
+            echo "Extracting storage account name from connection string..."
+            ACCOUNT_NAME=$(echo "$CONNECTION_STRING" | sed -n 's/.*AccountName=\([^;]*\).*/\1/p')
+            if [ -z "$ACCOUNT_NAME" ]; then
+              echo "Error: Could not extract AccountName from connection string."
+              exit 1
+            fi
+            echo "Deploying to storage account: $ACCOUNT_NAME"
+            az storage blob upload-batch --account-name $ACCOUNT_NAME --auth-mode login -d '$web' -s 'dist' --overwrite
+        env:
+          CONNECTION_STRING: ${{ secrets.AZURE_STORAGE_CONNECTION_STRING }}
