@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [1.4.1](https://github.com/michaelpennington/reconciler/compare/v1.4.0...v1.4.1) (2025-09-12)
+
+
+### Bug Fixes
+
+* update release please to use PAT ([059cf7a](https://github.com/michaelpennington/reconciler/commit/059cf7aeb6d1a1c2b8d63becc34a5e61255cebdd))
+
 ## [1.4.0](https://github.com/michaelpennington/reconciler/compare/v1.3.0...v1.4.0) (2025-09-12)
 
 
