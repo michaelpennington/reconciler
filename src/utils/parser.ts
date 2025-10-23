@@ -278,10 +278,10 @@ export async function* mtLineParser(lines: string[]): AsyncGenerator<EMARLineIte
           console.log(currentMedication);
           throw Error(`Found medication string without ending dose! On line ${lineNo}`);
         }
-        let dose = currentMedication.slice(lastParen);
+        let dose = currentMedication.slice(lastParen).trim();
         currentMedication = currentMedication.slice(0, lastParen - 1);
         if (!dose.startsWith("(") || !dose.endsWith(")")) {
-          throw Error(`Malformed dose ${dose} at and of medication]`);
+          throw Error(`Malformed dose ${dose} at end of medication`);
         }
         let doseStrs = dose.slice(1, -1).trim().split(" ");
         currentDoseAmt = parseFloat(doseStrs[0].replace(",", ""));
