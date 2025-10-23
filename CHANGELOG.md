@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [1.5.1](https://github.com/michaelpennington/reconciler/compare/reconciler-v1.5.0...reconciler-v1.5.1) (2025-10-23)
+
+
+### Bug Fixes
+
+* trim dose string before checking it ([9f77904](https://github.com/michaelpennington/reconciler/commit/9f779041e9738dc54d06ed7cd345c5929ced7dbf))
+
 ## [1.5.0](https://github.com/michaelpennington/reconciler/compare/reconciler-v1.4.2...reconciler-v1.5.0) (2025-09-12)
 
 
